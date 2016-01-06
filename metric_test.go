@@ -15,6 +15,7 @@
 package tgo
 
 import (
+	"github.com/trivago/tgo/ttesting"
 	"sync"
 	"testing"
 )
@@ -27,7 +28,7 @@ func getMockMetric() metrics {
 }
 
 func TestMetricsSet(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()
 
 	// test for initialization to zero
@@ -56,7 +57,7 @@ func TestMetricsSet(t *testing.T) {
 }
 
 func TestMetricsAddSub(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()
 
 	mockMetric.New("MockMetric")
@@ -92,7 +93,7 @@ func TestMetricsAddSub(t *testing.T) {
 }
 
 func TestMetricsIncDec(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()
 	mockMetric.New("MockMetric")
 

@@ -12,17 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tmath
 
-import (
-	"testing"
-)
+// MaxI returns the maximum out of two integers
+func MaxI(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
 
-func TestTrieAddNewChild(t *testing.T) {
-	// expect := NewExpect(t)
-	// trie := NewTrie([]byte("ted"), "somemetadata")
-	// // exact nature of pathLen
-	// // if pathLen is 2 for a word Hello then what happens to llo?
-	// //
-	// trie.Match()
+// Max3I returns the maximum out of three integers
+func Max3I(a, b, c int) int {
+	max := a
+	if b > max {
+		max = b
+	}
+	if c > max {
+		max = c
+	}
+	return max
+}
+
+// MinI returns the minimum out of two integers
+func MinI(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Min3I returns the minimum out of three integers
+func Min3I(a, b, c int) int {
+	min := a
+	if b < min {
+		min = b
+	}
+	if c < min {
+		min = c
+	}
+	return min
 }

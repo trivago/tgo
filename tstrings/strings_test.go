@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tstrings
 
 import (
+	"github.com/trivago/tgo/ttesting"
 	"testing"
 )
 
 func TestItoLen(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	expect.Equal(1, ItoLen(0))
 	expect.Equal(1, ItoLen(1))
@@ -30,7 +31,7 @@ func TestItoLen(t *testing.T) {
 }
 
 func TestItob(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	buffer := [3]byte{'1', '1', '1'}
 
 	Itob(0, buffer[:])
@@ -44,7 +45,7 @@ func TestItob(t *testing.T) {
 }
 
 func TestItobe(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	buffer := [3]byte{'1', '1', '1'}
 
 	Itobe(0, buffer[:])
@@ -58,7 +59,7 @@ func TestItobe(t *testing.T) {
 }
 
 func TestBtoi(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	result, length := Btoi([]byte("0"))
 	expect.Equal(0, int(result))
@@ -90,7 +91,7 @@ func TestBtoi(t *testing.T) {
 }
 
 func TestIndexN(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	testString := "a.b.c.d"
 	expect.Equal(-1, IndexN(testString, ".", 4))

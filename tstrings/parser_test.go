@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tstrings
 
 import (
+	"github.com/trivago/tgo/tcontainer"
+	"github.com/trivago/tgo/ttesting"
 	"testing"
 )
 
@@ -49,9 +51,9 @@ func (t *parserTestState) parsedArray(data []byte, state ParserStateID) {
 }
 
 func TestTrie(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
-	root := NewTrie([]byte("abcd"), new(int))
+	root := tcontainer.NewTrie([]byte("abcd"), new(int))
 	root = root.Add([]byte("abd"), new(int))
 	root = root.Add([]byte("cde"), new(int))
 
@@ -73,7 +75,7 @@ func TestTrie(t *testing.T) {
 	node = root.MatchStart([]byte("bcde"))
 	expect.Nil(node)
 
-	root2 := NewTrie([]byte("a"), new(int))
+	root2 := tcontainer.NewTrie([]byte("a"), new(int))
 	root2 = root.Add([]byte("b"), new(int))
 	root2 = root.Add([]byte("c"), new(int))
 
@@ -86,7 +88,7 @@ func TestTrie(t *testing.T) {
 
 func TestParser(t *testing.T) {
 	state := parserTestState{parsed: make(map[string]interface{})}
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	dir := []TransitionDirective{
 		TransitionDirective{testStateSearchName, `"`, testStateName, 0, nil},
@@ -116,7 +118,7 @@ func TestParser(t *testing.T) {
 }
 
 func TestDirectiveParser(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	callbacks := make(map[string]ParsedFunc)
 
 	callbacks["write"] = func(data []byte, state ParserStateID) {

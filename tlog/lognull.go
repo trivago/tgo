@@ -12,27 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tnet
+package tlog
 
-import (
-	"github.com/trivago/tgo/ttesting"
-	"testing"
-)
-
-func TestStopListenerNewStopListener(t *testing.T) {
-	expect := ttesting.NewExpect(t)
-
-	listener, err := NewStopListener("incompliantAddress")
-	expect.Nil(listener)
-	expect.NotNil(err)
-
-	listener, err = NewStopListener("localhost:8080")
-	expect.Nil(err)
-	expect.NotNil(listener)
-	err = listener.Close()
-	expect.Nil(err)
+type logNull struct {
 }
 
-func TestStopListenerAccept(t *testing.T) {
-
+// Write Drops all messages
+func (log logNull) Write(message []byte) (int, error) {
+	return len(message), nil
 }

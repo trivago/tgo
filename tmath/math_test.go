@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tmath
 
 import (
+	"github.com/trivago/tgo/ttesting"
 	"testing"
 )
 
 func TestMin(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	expect.Equal(0, MinI(1, 0))
 	expect.Equal(0, MinI(0, 1))
@@ -28,7 +29,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	expect.Equal(1, MaxI(1, 0))
 	expect.Equal(1, MaxI(0, 1))
@@ -37,7 +38,7 @@ func TestMax(t *testing.T) {
 }
 
 func TestMin3(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	expect.Equal(0, Min3I(0, 1, 2))
 	expect.Equal(0, Min3I(0, 2, 1))
@@ -55,7 +56,7 @@ func TestMin3(t *testing.T) {
 }
 
 func TestMax3(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	expect.Equal(2, Max3I(0, 1, 2))
 	expect.Equal(2, Max3I(0, 2, 1))

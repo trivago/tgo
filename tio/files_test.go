@@ -15,7 +15,7 @@
 package tio
 
 import (
-	"github.com/trivago/tgo"
+	"github.com/trivago/tgo/ttesting"
 	"os"
 	"sort"
 	"testing"
@@ -23,7 +23,7 @@ import (
 )
 
 func TestListFilesByDateMatching(t *testing.T) {
-	expect := tgo.NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	files, err := ListFilesByDateMatching(".", "\\.go$")
 	expect.NoError(err)
@@ -75,7 +75,7 @@ func (info fileInfoMock) Sys() interface{} {
 }
 
 func TestSplitPath(t *testing.T) {
-	expect := tgo.NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	dir, name, ext := SplitPath("a/b")
 
@@ -97,7 +97,7 @@ func TestSplitPath(t *testing.T) {
 }
 
 func TestFilesByDate(t *testing.T) {
-	expect := tgo.NewExpect(t)
+	expect := ttesting.NewExpect(t)
 
 	testData := FilesByDate{
 		fileInfoMock{name: "log1", mod: time.Unix(1, 0)},

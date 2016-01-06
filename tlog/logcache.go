@@ -12,12 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tlog
 
 import (
-	"testing"
+	"io"
 )
 
-func TestExpect(t *testing.T) {
+type logCache struct {
+	messages []string
+}
 
+// Write caches the message as string
+func (log *logCache) Write(message []byte) (int, error) {
+	log.messages = append(log.messages, string(message))
+	return len(message), nil
+}
+
+func (log *logCache) flush(writer io.Writer) {
+	for _, message := range log.messages {
+		writer.Write([]byte(message))
+	}
+	log.messages = []string{}
 }

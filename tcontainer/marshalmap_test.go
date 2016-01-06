@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tcontainer
 
 import (
+	"github.com/trivago/tgo/ttesting"
 	"testing"
 )
 
 func TestMarshalMapBaseTypes(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	testMap["t1"] = 10
@@ -44,7 +45,7 @@ func TestMarshalMapBaseTypes(t *testing.T) {
 }
 
 func TestMarshalMapArrays(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	iArray := []interface{}{"test", 0}
@@ -61,7 +62,7 @@ func TestMarshalMapArrays(t *testing.T) {
 }
 
 func TestMarshalMapMaps(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	iiMap := make(map[interface{}]interface{})
@@ -74,7 +75,7 @@ func TestMarshalMapMaps(t *testing.T) {
 }
 
 func TestMarshalMapMarshalMaps(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	siMap := NewMarshalMap()
@@ -103,7 +104,7 @@ func TestMarshalMapMarshalMaps(t *testing.T) {
 }
 
 func TestMarshalMapStringMaps(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	ssMap := make(map[string]string)
@@ -132,7 +133,7 @@ func TestMarshalMapStringMaps(t *testing.T) {
 }
 
 func TestMarshalMapStringArrayMaps(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	// String array map
@@ -174,7 +175,7 @@ func TestMarshalMapStringArrayMaps(t *testing.T) {
 }
 
 func TestMarshalMapPath(t *testing.T) {
-	expect := NewExpect(t)
+	expect := ttesting.NewExpect(t)
 	testMap := NewMarshalMap()
 
 	nestedMap1 := make(map[string]interface{})
