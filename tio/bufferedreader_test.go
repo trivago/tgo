@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tio
 
 import (
 	"bytes"
 	"fmt"
+	"github.com/trivago/tgo"
 	"io"
 	"strings"
 	"testing"
 )
 
 type bufferedReaderTestData struct {
-	expect Expect
+	expect tgo.Expect
 	tokens []string
 	parsed int
 }
@@ -35,7 +36,7 @@ func (br *bufferedReaderTestData) write(data []byte, seq uint64) {
 
 func TestBufferedReaderDelimiter(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -55,7 +56,7 @@ func TestBufferedReaderDelimiter(t *testing.T) {
 
 func TestBufferedReaderMLEText(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -79,7 +80,7 @@ func TestBufferedReaderMLEText(t *testing.T) {
 
 func TestBufferedReaderFixed(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test2", "test3"},
 		parsed: 0,
 	}
@@ -103,7 +104,7 @@ func TestBufferedReaderFixed(t *testing.T) {
 
 func TestBufferedReaderMLE8(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -128,7 +129,7 @@ func TestBufferedReaderMLE8(t *testing.T) {
 
 func TestBufferedReaderMLE16(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -153,7 +154,7 @@ func TestBufferedReaderMLE16(t *testing.T) {
 
 func TestBufferedReaderMLE32(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -178,7 +179,7 @@ func TestBufferedReaderMLE32(t *testing.T) {
 
 func TestBufferedReaderMLE64(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -203,7 +204,7 @@ func TestBufferedReaderMLE64(t *testing.T) {
 
 func TestBufferedReaderMLE8EO(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -229,7 +230,7 @@ func TestBufferedReaderMLE8EO(t *testing.T) {
 
 func TestBufferedReaderMLETextEO(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}
@@ -251,7 +252,7 @@ func TestBufferedReaderMLETextEO(t *testing.T) {
 
 func TestBufferedReaderDelimiterE(t *testing.T) {
 	data := bufferedReaderTestData{
-		expect: NewExpect(t),
+		expect: tgo.NewExpect(t),
 		tokens: []string{"test1", "test 2", "test\t3"},
 		parsed: 0,
 	}

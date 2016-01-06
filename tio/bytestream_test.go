@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tio
 
 import (
+	"github.com/trivago/tgo"
 	"testing"
 )
 
 func TestByteWriteByte(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 	stream := NewByteStream(1)
 
 	data := []byte("a")
@@ -28,7 +29,7 @@ func TestByteWriteByte(t *testing.T) {
 }
 
 func TestByteStream(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 
 	stream := NewByteStream(1)
 	expect.Equal(1, stream.Cap())

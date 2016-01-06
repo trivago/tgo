@@ -1,12 +1,13 @@
-package tgo
+package tsync
 
 import (
+	"github.com/trivago/tgo"
 	"testing"
 	"time"
 )
 
 func TestFuse(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 	fuse := NewFuse()
 
 	expect.False(fuse.IsBurned())

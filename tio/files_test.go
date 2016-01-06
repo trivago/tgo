@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tio
 
 import (
+	"github.com/trivago/tgo"
 	"os"
 	"sort"
 	"testing"
@@ -22,7 +23,7 @@ import (
 )
 
 func TestListFilesByDateMatching(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 
 	files, err := ListFilesByDateMatching(".", "\\.go$")
 	expect.NoError(err)
@@ -74,7 +75,7 @@ func (info fileInfoMock) Sys() interface{} {
 }
 
 func TestSplitPath(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 
 	dir, name, ext := SplitPath("a/b")
 
@@ -96,7 +97,7 @@ func TestSplitPath(t *testing.T) {
 }
 
 func TestFilesByDate(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 
 	testData := FilesByDate{
 		fileInfoMock{name: "log1", mod: time.Unix(1, 0)},

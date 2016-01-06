@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package tgo
+package tnet
 
 import (
+	"github.com/trivago/tgo"
 	"testing"
 )
 
 func TestStopListenerNewStopListener(t *testing.T) {
-	expect := NewExpect(t)
+	expect := tgo.NewExpect(t)
 
 	listener, err := NewStopListener("incompliantAddress")
 	expect.Nil(listener)

@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package flag
+package tflag
 
 import (
 	"flag"
 	"fmt"
-	"os"
 )
 
 type flagKeyDescription struct {
@@ -28,7 +27,6 @@ type flagKeyDescription struct {
 
 var descriptions = []flagKeyDescription{}
 var tabWidth = []int{0, 0, 0}
-var cmdFlags *flag.FlagSet
 
 const (
 	tabKey   = iota
@@ -37,8 +35,7 @@ const (
 )
 
 func init() {
-	cmdFlags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	cmdFlags.Usage = func() {}
+	flag.CommandLine.Usage = func() {}
 }
 
 func addKeyDescription(short string, long string, value interface{}, usage string) {
@@ -70,8 +67,8 @@ func SwitchVar(flagVar *bool, short string, long string, usage string) *bool {
 // BoolVar adds a boolean flag to the parameters list. This is using the golang
 // flag package internally.
 func BoolVar(flagVar *bool, short string, long string, value bool, usage string) *bool {
-	cmdFlags.BoolVar(flagVar, short, value, usage)
-	cmdFlags.BoolVar(flagVar, long, value, usage)
+	flag.BoolVar(flagVar, short, value, usage)
+	flag.BoolVar(flagVar, long, value, usage)
 	addKeyDescription(short, long, value, usage)
 	return flagVar
 }
@@ -79,8 +76,8 @@ func BoolVar(flagVar *bool, short string, long string, value bool, usage string)
 // IntVar adds an integer flag to the parameters list. This is using the golang
 // flag package internally.
 func IntVar(flagVar *int, short string, long string, value int, usage string) *int {
-	cmdFlags.IntVar(flagVar, short, value, usage)
-	cmdFlags.IntVar(flagVar, long, value, usage)
+	flag.IntVar(flagVar, short, value, usage)
+	flag.IntVar(flagVar, long, value, usage)
 	addKeyDescription(short, long, value, usage)
 	return flagVar
 }
@@ -88,8 +85,8 @@ func IntVar(flagVar *int, short string, long string, value int, usage string) *i
 // Int64Var adds am int64 flag to the parameters list. This is using the golang
 // flag package internally.
 func Int64Var(flagVar *int64, short string, long string, value int64, usage string) *int64 {
-	cmdFlags.Int64Var(flagVar, short, value, usage)
-	cmdFlags.Int64Var(flagVar, long, value, usage)
+	flag.Int64Var(flagVar, short, value, usage)
+	flag.Int64Var(flagVar, long, value, usage)
 	addKeyDescription(short, long, value, usage)
 	return flagVar
 }
@@ -97,8 +94,8 @@ func Int64Var(flagVar *int64, short string, long string, value int64, usage stri
 // Float64Var adds a float flag to the parameters list. This is using the golang
 // flag package internally.
 func Float64Var(flagVar *float64, short string, long string, value float64, usage string) *float64 {
-	cmdFlags.Float64Var(flagVar, short, value, usage)
-	cmdFlags.Float64Var(flagVar, long, value, usage)
+	flag.Float64Var(flagVar, short, value, usage)
+	flag.Float64Var(flagVar, long, value, usage)
 	addKeyDescription(short, long, value, usage)
 	return flagVar
 }
@@ -106,8 +103,8 @@ func Float64Var(flagVar *float64, short string, long string, value float64, usag
 // StringVar adds a string flag to the parameters list. This is using the golang
 // flag package internally.
 func StringVar(flagVar *string, short string, long string, value string, usage string) *string {
-	cmdFlags.StringVar(flagVar, short, value, usage)
-	cmdFlags.StringVar(flagVar, long, value, usage)
+	flag.StringVar(flagVar, short, value, usage)
+	flag.StringVar(flagVar, long, value, usage)
 	addKeyDescription(short, long, value, usage)
 	return flagVar
 }
@@ -149,7 +146,7 @@ func String(short string, long string, value string, usage string) *string {
 }
 
 func Parse() {
-	cmdFlags.Parse(os.Args[1:])
+	flag.Parse()
 }
 
 func PrintFlags(header string) {
