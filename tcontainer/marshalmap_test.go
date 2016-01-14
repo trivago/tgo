@@ -200,45 +200,45 @@ func TestMarshalMapPath(t *testing.T) {
 	testMap["b"] = nestedArray2
 	testMap["c"] = nestedMap2
 
-	val, valid := testMap.Path("a")
+	val, valid := testMap.Value("a")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("b")
+	val, valid = testMap.Value("b")
 	expect.True(valid)
 
-	val, valid = testMap.Path("c")
+	val, valid = testMap.Value("c")
 	expect.True(valid)
 
-	val, valid = testMap.Path("b[0]")
-	expect.True(valid)
-	expect.Equal("ok", val)
-
-	val, valid = testMap.Path("b[1]d")
+	val, valid = testMap.Value("b[0]")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("b[1]e/f")
+	val, valid = testMap.Value("b[1]d")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("b[2][0]")
+	val, valid = testMap.Value("b[1]e/f")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("b[2][1]d")
+	val, valid = testMap.Value("b[2][0]")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("b[2][1]e/f")
+	val, valid = testMap.Value("b[2][1]d")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("c/d")
+	val, valid = testMap.Value("b[2][1]e/f")
 	expect.True(valid)
 	expect.Equal("ok", val)
 
-	val, valid = testMap.Path("c/e/f")
+	val, valid = testMap.Value("c/d")
+	expect.True(valid)
+	expect.Equal("ok", val)
+
+	val, valid = testMap.Value("c/e/f")
 	expect.True(valid)
 	expect.Equal("ok", val)
 }
