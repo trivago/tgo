@@ -44,7 +44,7 @@ func (stack *ErrorStack) Push(err error) bool {
 
 // Pushf adds a new error message to the top of the error stack
 func (stack *ErrorStack) Pushf(message string, args ...interface{}) {
-	stack.errors = append(stack.errors, fmt.Errorf(message, args))
+	stack.errors = append(stack.errors, fmt.Errorf(message, args...))
 }
 
 // Pop removes an error from the top of the stack and returns it
