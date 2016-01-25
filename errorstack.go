@@ -65,8 +65,8 @@ func (stack ErrorStack) Top() error {
 	return stack.errors[len(stack.errors)-1]
 }
 
-// String implements the Stringer interface
-func (stack ErrorStack) String() string {
+// Error implements the Error interface
+func (stack ErrorStack) Error() string {
 	if len(stack.errors) == 0 {
 		return ""
 	}
@@ -77,13 +77,8 @@ func (stack ErrorStack) String() string {
 	return errString
 }
 
-// Error implements the Error interface
-func (stack ErrorStack) Error() string {
-	return stack.String()
-}
-
-// ErrorOrNil returns this object or nil of no errors are stored
-func (stack *ErrorStack) ErrorOrNil() error {
+// OrNil returns this object or nil of no errors are stored
+func (stack *ErrorStack) OrNil() error {
 	if len(stack.errors) == 0 {
 		return nil
 	}
@@ -244,7 +239,7 @@ func (stack *ErrorStack) Complex128(value complex128, err error) complex128 {
 
 // Str can be used to wrap a function call returning an string and an error,
 // will Push the error and return the value
-func (stack *ErrorStack) Str(value string, err error) string {
+func (stack *ErrorStack) String(value string, err error) string {
 	stack.Push(err)
 	return value
 }
