@@ -111,8 +111,8 @@ func SetVerbosity(loglevel Verbosity) {
 	}
 }
 
-// CacheWrites will force all logs to be cached until another writer is set
-func CacheWrites() {
+// SetCacheWriter will force all logs to be cached until another writer is set
+func SetCacheWriter() {
 	if _, isCache := logEnabled.writer.(*logCache); !isCache {
 		logEnabled.writer = new(logCache)
 	}
