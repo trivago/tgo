@@ -14,13 +14,82 @@ import (
 type MarshalMap map[string]interface{}
 
 const (
-	// MarshalMapSeparator defines the separator used for nested keys
-	MarshalMapSeparator = "/"
+	// MarshalMapSeparator defines the rune used for path separation
+	MarshalMapSeparator = '/'
+	// MarshalMapArrayBegin defines the rune starting array index notation
+	MarshalMapArrayBegin = '['
+	// MarshalMapArrayEnd defines the rune ending array index notation
+	MarshalMapArrayEnd = ']'
 )
 
 // NewMarshalMap creates a new marshal map (string -> interface{})
 func NewMarshalMap() MarshalMap {
 	return make(map[string]interface{})
+}
+
+// ConvertToMarshalMap tries to convert a type compatible map to a marshal map.
+// Compatible types are map[interface{}]interface{}, map[string]interface{} and of
+// course MarshalMap. The underlying type must be a map[string]interface{}.
+// Convertable child maps will be converted, too.
+// You can pass a formatKey function to modify the map keys during conversion.
+func ConvertToMarshalMap(value interface{}, formatKey func(string) string) (MarshalMap, error) {
+	switch value.(type) {
+	case map[interface{}]interface{}:
+		mapValue := value.(map[interface{}]interface{})
+		result := NewMarshalMap()
+
+		for key, val := range mapValue {
+			stringKey, isString := key.(string)
+			if !isString {
+				return nil, fmt.Errorf("Value is not a map[string]interface{}. Key is not a string")
+			}
+
+			if formatKey != nil {
+				stringKey = formatKey(stringKey)
+			}
+
+			// Convert child nodes to marshal maps, too.
+			switch val.(type) {
+			case map[interface{}]interface{}, map[string]interface{}, MarshalMap:
+				var err error
+				if result[stringKey], err = ConvertToMarshalMap(val, formatKey); err != nil {
+					return nil, err
+				}
+			default:
+				result[stringKey] = val
+			}
+		}
+		return result, nil
+
+	case map[string]interface{}:
+		mapValue := value.(map[string]interface{})
+		// No formatting? pass through
+		if formatKey == nil {
+			return mapValue, nil
+		}
+		// Format keys
+		result := NewMarshalMap()
+		for key, val := range mapValue {
+			result[formatKey(key)] = val
+		}
+		return result, nil
+
+	case MarshalMap:
+		mapValue := value.(MarshalMap)
+		// No formatting? pass through
+		if formatKey == nil {
+			return mapValue, nil
+		}
+		// Format keys
+		result := NewMarshalMap()
+		for key, val := range mapValue {
+			result[formatKey(key)] = val
+		}
+		return result, nil
+
+	default:
+		return nil, fmt.Errorf("Value is not compatible to map[string]interface{}")
+	}
 }
 
 // Bool returns a value at key that is expected to be a boolean
@@ -299,29 +368,7 @@ func (mmap MarshalMap) MarshalMap(key string) (MarshalMap, error) {
 		return nil, fmt.Errorf(`"%s" is not set`, key)
 	}
 
-	switch val.(type) {
-	case map[interface{}]interface{}:
-		result := NewMarshalMap()
-		interfaceMap, _ := val.(map[interface{}]interface{})
-
-		for key, value := range interfaceMap {
-			stringKey, isString := key.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string]interface{}. Key is not a string`, key)
-			}
-			result[stringKey] = value
-		}
-		return result, nil
-
-	case map[string]interface{}:
-		return val.(map[string]interface{}), nil
-
-	case MarshalMap:
-		return val.(MarshalMap), nil
-
-	default:
-		return nil, fmt.Errorf(`"%s" is expected to be a map[string]interface{}`, key)
-	}
+	return ConvertToMarshalMap(val, nil)
 }
 
 // Value returns a value from a given value path.
@@ -340,8 +387,8 @@ func (mmap MarshalMap) Value(key string) (interface{}, bool) {
 func (mmap MarshalMap) resolvePathKey(key string) (int, int) {
 	keyEnd := len(key)
 	nextKeyStart := keyEnd
-	pathIdx := strings.Index(key, MarshalMapSeparator)
-	arrayIdx := strings.Index(key, "[")
+	pathIdx := strings.IndexRune(key, MarshalMapSeparator)
+	arrayIdx := strings.IndexRune(key, MarshalMapArrayBegin)
 
 	if pathIdx > -1 && pathIdx < keyEnd {
 		keyEnd = pathIdx
@@ -367,16 +414,16 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 	// Expecting nested type
 	switch value.(type) {
 	case []interface{}:
-		startIdx := strings.Index(key, "[") + 1 // Must be first char, otherwise malformed
-		endIdx := strings.Index(key, "]")       // Must be > startIdx, otherwise malformed
+		startIdx := strings.IndexRune(key, MarshalMapArrayBegin) // Must be first char, otherwise malformed
+		endIdx := strings.IndexRune(key, MarshalMapArrayEnd)     // Must be > startIdx, otherwise malformed
 
 		if startIdx == -1 || endIdx == -1 {
 			return nil, false
 		}
 
-		if startIdx == 1 && endIdx > startIdx {
+		if startIdx == 0 && endIdx > startIdx {
 			arrayValue := value.([]interface{})
-			index, err := strconv.Atoi(key[startIdx:endIdx])
+			index, err := strconv.Atoi(key[startIdx+1 : endIdx])
 
 			// [1]    -> index: "1", remain: ""    -- value
 			// [1]a/b -> index: "1", remain: "a/b" -- nested map
@@ -389,28 +436,16 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 			}
 		}
 
-	case MarshalMap:
+	case MarshalMap, map[string]interface{}:
 		mapValue := value.(MarshalMap)
-		if value, exists := mapValue[key]; exists {
-			return value, true
+		if storedValue, exists := mapValue[key]; exists {
+			return storedValue, true
 		}
 
 		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
-		if value, exists := mapValue[key[:keyEnd]]; exists {
+		if storedValue, exists := mapValue[key[:keyEnd]]; exists {
 			remain := key[nextKeyStart:]
-			return mmap.resolvePath(remain, value) // ### return, nested map ###
-		}
-
-	case map[string]interface{}:
-		mapValue := value.(map[string]interface{})
-		if value, exists := mapValue[key]; exists {
-			return value, true
-		}
-
-		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
-		if value, exists := mapValue[key[:keyEnd]]; exists {
-			remain := key[nextKeyStart:]
-			return mmap.resolvePath(remain, value) // ### return, nested map ###
+			return mmap.resolvePath(remain, storedValue) // ### return, nested map ###
 		}
 	}
 
