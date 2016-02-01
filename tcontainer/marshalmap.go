@@ -27,69 +27,108 @@ func NewMarshalMap() MarshalMap {
 	return make(map[string]interface{})
 }
 
-// ConvertToMarshalMap tries to convert a type compatible map to a marshal map.
-// Compatible types are map[interface{}]interface{}, map[string]interface{} and of
-// course MarshalMap. The underlying type must be a map[string]interface{}.
-// Convertable child maps will be converted, too.
-// You can pass a formatKey function to modify the map keys during conversion.
-func ConvertToMarshalMap(value interface{}, formatKey func(string) string) (MarshalMap, error) {
+// TryConvertToMarshalMap converts collections to MarshalMap if possible.
+// This is a deep conversion, i.e. each element in the collection will be
+// traversed. You can pass a formatKey function that will be applied to all
+// string keys that are detected.
+func TryConvertToMarshalMap(value interface{}, formatKey func(string) string) interface{} {
 	switch value.(type) {
-	case map[interface{}]interface{}:
-		mapValue := value.(map[interface{}]interface{})
-		result := NewMarshalMap()
+	default:
+		return value // ### return, not mappable ###
 
-		for key, val := range mapValue {
-			stringKey, isString := key.(string)
-			if !isString {
-				return nil, fmt.Errorf("Value is not a map[string]interface{}. Key is not a string")
-			}
+	case []interface{}:
+		arrayValue := value.([]interface{})
+		converted := make([]interface{}, len(arrayValue))
 
-			if formatKey != nil {
-				stringKey = formatKey(stringKey)
-			}
-
-			// Convert child nodes to marshal maps, too.
-			switch val.(type) {
-			case map[interface{}]interface{}, map[string]interface{}, MarshalMap:
-				var err error
-				if result[stringKey], err = ConvertToMarshalMap(val, formatKey); err != nil {
-					return nil, err
-				}
-			default:
-				result[stringKey] = val
-			}
+		for idx, originalValue := range arrayValue {
+			converted[idx] = TryConvertToMarshalMap(originalValue, formatKey)
 		}
-		return result, nil
+		return converted // ### return, converted array ###
 
-	case map[string]interface{}:
-		mapValue := value.(map[string]interface{})
-		// No formatting? pass through
-		if formatKey == nil {
-			return mapValue, nil
+	case []MarshalMap:
+		arrayValue := value.([]MarshalMap)
+		converted := make([]MarshalMap, len(arrayValue))
+		for idx, originalValue := range arrayValue {
+			converted[idx] = TryConvertToMarshalMap(originalValue, formatKey).(MarshalMap)
 		}
-		// Format keys
-		result := NewMarshalMap()
-		for key, val := range mapValue {
-			result[formatKey(key)] = val
+		return converted // ### return, converted array ###
+
+	case []map[string]interface{}:
+		arrayValue := value.([]map[string]interface{})
+		converted := make([]MarshalMap, len(arrayValue))
+		for idx, originalValue := range arrayValue {
+			converted[idx] = TryConvertToMarshalMap(originalValue, formatKey).(MarshalMap)
 		}
-		return result, nil
+		return converted // ### return, converted array ###
 
 	case MarshalMap:
 		mapValue := value.(MarshalMap)
-		// No formatting? pass through
-		if formatKey == nil {
-			return mapValue, nil
-		}
-		// Format keys
-		result := NewMarshalMap()
-		for key, val := range mapValue {
-			result[formatKey(key)] = val
-		}
-		return result, nil
+		converted := NewMarshalMap()
 
-	default:
-		return nil, fmt.Errorf("Value is not compatible to map[string]interface{}")
+		for key, originalValue := range mapValue {
+			if formatKey != nil {
+				key = formatKey(key)
+			}
+			converted[key] = TryConvertToMarshalMap(originalValue, formatKey)
+		}
+		return converted // ### return, converted MarshalMap ###
+
+	case map[string]interface{}:
+		mapValue := value.(map[string]interface{})
+		converted := NewMarshalMap()
+
+		for key, originalValue := range mapValue {
+			if formatKey != nil {
+				key = formatKey(key)
+			}
+			converted[key] = TryConvertToMarshalMap(originalValue, formatKey)
+		}
+		return converted // ### return, converted string map ###
+
+	case map[interface{}]interface{}:
+		mapValue := value.(map[interface{}]interface{})
+
+		isStringMap := true
+		for key := range mapValue {
+			if _, isString := key.(string); !isString {
+				isStringMap = false
+				break // ### break, non-string map ###
+			}
+		}
+
+		if isStringMap {
+			converted := NewMarshalMap()
+			for key, originalValue := range mapValue {
+				stringKey := key.(string)
+				if formatKey != nil {
+					stringKey = formatKey(stringKey)
+				}
+				converted[stringKey] = TryConvertToMarshalMap(originalValue, formatKey)
+			}
+			return converted // ### return, converted as MarshalMap ###
+		}
+
+		converted := make(map[interface{}]interface{})
+		for key, originalValue := range mapValue {
+			stringKey, isString := key.(string)
+			if isString && formatKey != nil {
+				key = formatKey(stringKey)
+			}
+			converted[key] = TryConvertToMarshalMap(originalValue, formatKey)
+		}
+		return converted // ### return, converted as generic map ###
 	}
+}
+
+// ConvertToMarshalMap tries to convert a compatible map type to a marshal map.
+// Compatible types are map[interface{}]interface{}, map[string]interface{} and of
+// course MarshalMap. The same rules as for ConvertValueToMarshalMap apply.
+func ConvertToMarshalMap(value interface{}, formatKey func(string) string) (MarshalMap, error) {
+	converted := TryConvertToMarshalMap(value, formatKey)
+	if result, isMap := converted.(MarshalMap); isMap {
+		return result, nil
+	}
+	return nil, fmt.Errorf("Root value cannot be converted to MarshalMap")
 }
 
 // Bool returns a value at key that is expected to be a boolean
@@ -436,7 +475,19 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 			}
 		}
 
-	case MarshalMap, map[string]interface{}:
+	case map[string]interface{}:
+		mapValue := value.(map[string]interface{})
+		if storedValue, exists := mapValue[key]; exists {
+			return storedValue, true
+		}
+
+		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
+		if storedValue, exists := mapValue[key[:keyEnd]]; exists {
+			remain := key[nextKeyStart:]
+			return mmap.resolvePath(remain, storedValue) // ### return, nested map ###
+		}
+
+	case MarshalMap:
 		mapValue := value.(MarshalMap)
 		if storedValue, exists := mapValue[key]; exists {
 			return storedValue, true

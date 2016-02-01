@@ -242,3 +242,93 @@ func TestMarshalMapPath(t *testing.T) {
 	expect.True(valid)
 	expect.Equal("ok", val)
 }
+
+func TestMarshalMapConvert(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	// Simple MarshalMap
+	convert1 := MarshalMap{
+		"FOO": true,
+		"BAR": "test",
+	}
+	_, err := ConvertToMarshalMap(convert1, nil)
+	expect.NoError(err)
+
+	// Simple StringMap
+	convert2 := map[string]interface{}{
+		"FOO": true,
+		"BAR": "test",
+	}
+	_, err = ConvertToMarshalMap(convert2, nil)
+	expect.NoError(err)
+
+	// Simple, convertible AnyMap
+	convert3 := map[interface{}]interface{}{
+		"FOO": true,
+		"BAR": "test",
+	}
+	_, err = ConvertToMarshalMap(convert3, nil)
+	expect.NoError(err)
+
+	// Simple, non-convertible AnyMap
+	convert4 := map[interface{}]interface{}{
+		"FOO": true,
+		"BAR": "test",
+		0:     true,
+	}
+	_, err = ConvertToMarshalMap(convert4, nil)
+	expect.NotNil(err)
+
+	// Array as root
+	arrayRoot := []interface{}{
+		convert1,
+		convert2,
+		convert3,
+		convert4,
+	}
+
+	_, err = ConvertToMarshalMap(arrayRoot, nil)
+	expect.NotNil(err)
+
+	_, isArray := TryConvertToMarshalMap(arrayRoot, nil).([]interface{})
+	expect.True(isArray)
+
+	// MarshalMapRoot
+	mapRoot1 := MarshalMap{
+		"a1": arrayRoot,
+		"c1": convert1,
+		"c2": convert2,
+		"c3": convert3,
+		"c4": convert4,
+	}
+
+	_, err = ConvertToMarshalMap(mapRoot1, nil)
+	expect.NoError(err)
+
+	// StringMapRoot
+	mapRoot2 := map[string]interface{}{
+		"m1": mapRoot1,
+		"a1": arrayRoot,
+		"c1": convert1,
+		"c2": convert2,
+		"c3": convert3,
+		"c4": convert4,
+	}
+
+	_, err = ConvertToMarshalMap(mapRoot2, nil)
+	expect.NoError(err)
+
+	// AnyMapRoot
+	mapRoot3 := map[interface{}]interface{}{
+		"m1": mapRoot1,
+		"m2": mapRoot2,
+		"a1": arrayRoot,
+		"c1": convert1,
+		"c2": convert2,
+		"c3": convert3,
+		"c4": convert4,
+	}
+
+	_, err = ConvertToMarshalMap(mapRoot3, nil)
+	expect.NoError(err)
+}
