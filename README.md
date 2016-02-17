@@ -1,5 +1,7 @@
 # tGo
 
+[![Build Status](https://travis-ci.org/trivago/tgo.svg?branch=master)](https://travis-ci.org/trivago/tgo)
+
 Trivago go extensions and utilities.
 This is a library package containing tools that aid trivago with golang development across different projects.
 
@@ -8,5 +10,3 @@ I.e. type that would be placed in the "net" package can be found in the "tnet" p
 This prefix was chosen to allow mixing standard libary and tgo without having to rename package imports all the time.
 
 This package is currently under heavy development and should be used with care.
-
-[![Build Status](https://drone.io/github.com/trivago/tgo/status.png)](https://drone.io/github.com/trivago/tgo/latest)
