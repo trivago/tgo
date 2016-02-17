@@ -1,14 +1,14 @@
 language: go
 sudo: false
-
 go:
-  - 1.5
-  - tip
-
+- 1.5
+- tip
 env:
-  - GO15VENDOREXPERIMENT=1
-
+- GO15VENDOREXPERIMENT=1
 script:
-  - go build
-  - go vet -v $(go list ./...|grep -v vendor)
-  - go test -v $(go list ./...|grep -v vendor)
+- go build
+- go vet -v $(go list ./...|grep -v vendor)
+- go test -v $(go list ./...|grep -v vendor)
+notifications:
+  slack:
+    secure: sEyZDunls5BnbJbqtQ7OpHILye8/APh6u7nSyPJIzxhQm0pAiTP3ZCFkGANqtCv/Rpg0MghrdVjzAWZwYepI7f2cZ4xGTav5LLA9AwlItBiylPb8LsSEC/YUz9qPVlvvIQDd7fvbk8KNYuFVunMWDyGLuloOo6KFCBGnIqh5i9bJ89bZpRDZWkXrkxbWkdnCwbkFi51jaPQYsR6aZUC+aGbV9vYGAj8XF/K1AdX4qxoc1598QC8+hNDsEi5gJnNNFDSf+Mw/0IJDkS7ighGBoq+L0NT8NEGKWVin4lyfloigT+Q6xwikQk6vD/i8f3ISFKEs0f3uAfhZrkLJc18qlzX2FTGlfJy5ggHsfb14AglJdxBrXKA4dxVjNqqaJriQOToTIx274VINW2EwKDKqoaNMosEkXtdSEL5lSmNz3igom688D3iSY/vvJBPr1X31peoEUzaEIzHKZnxWNmlWrOKssoLA9kwd+e7rv/P3LqHpbqO0y1a3NKUarWwz9WmDjWhwA7UNbmA6Q0MkUEI1zDjs86HbuH5xn4buRab/p5eX9eAusmp0DzVImTSjgIlXaSolaXIaTMDdspOPZtpzaA32wocktNKx2riATPvOmGQ6TeP+mivv4384njq5FB+cTi7a20HGGzxI0YA0hax4Y5YFgmaf5KZcfcj0k9Kqtv0=
