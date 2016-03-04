@@ -106,3 +106,16 @@ func TestIndexN(t *testing.T) {
 	expect.Equal(3, LastIndexN(testString, ".", 2))
 	expect.Equal(1, LastIndexN(testString, ".", 3))
 }
+
+func TestIsInt(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	expect.True(IsInt("123"))
+	expect.True(IsInt("-123"))
+	expect.False(IsInt("123-"))
+	expect.False(IsInt("1-23"))
+	expect.False(IsInt("a123"))
+	expect.False(IsInt("a123a"))
+	expect.False(IsInt("1.23"))
+	expect.False(IsInt("a123a"))
+}

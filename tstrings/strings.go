@@ -17,6 +17,7 @@ package tstrings
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -121,4 +122,15 @@ func LastIndexN(s, sep string, n int) int {
 		}
 	}
 	return sepIdx
+}
+
+// IsInt returns true if the given string can be converted to an integer.
+// The string must contain no whitespaces.
+func IsInt(s string) bool {
+	for i, c := range s {
+		if (c <= '0' || c >= '9') && (c != '-' || i != 0) {
+			return false
+		}
+	}
+	return true
 }
