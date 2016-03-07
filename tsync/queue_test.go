@@ -98,7 +98,7 @@ func BenchmarkQueuePush(b *testing.B) {
 
 func BenchmarkChannelPush(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		q := make(chan int, 100000)
+		q := make(chan interface{}, 100000)
 		for c := 0; c < 100000; c++ {
 			q <- 123
 		}
