@@ -4,9 +4,30 @@ import (
 	"sync/atomic"
 )
 
-// Queue implements a multi-producer, multi-consumer, lockfree queue.
-// Push is waitfree as long as the queue is not full.
-// Pop is waitfree as long as there are items in the queue.
+// Queue implements a multi-producer, multi-consumer, fair, lockfree queue.
+// Please note that while this queue is faster than a chan interface{} it
+// is not faster than a channel of a specific type due to the overhead
+// that interface{} brings.
+//
+// How it works:
+// Given a queue of capacity 7, we have two write indexes "p" and "n" for
+// process and next.
+//
+//    reader n/p
+//    v
+// [ |1|2|3| | | | ]
+//    ^     ^
+//    p     n
+//
+// Here threads 1,2 and 3 are writing to slots 1,2,3. When 3 is done
+// writing it has to wait for p to move to slot 3. Same for slot 2.
+// When 1 is done writing it immediatly moves p to slot 2, making it
+// possible for 2 to continue. Same for slot 3.
+// While p is still on 1 the "reader n" can be fetched but Pop will
+// wait until p has moved on. If "reader n" is done, "reader p" is
+// moved in similar fashion as p for writes.
+// This implements a FIFO queue for writes and reads and makes sure
+// that no incomplete reads or overwrites occur.
 type Queue struct {
 	write    queueAccess
 	read     queueAccess
