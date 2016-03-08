@@ -69,12 +69,12 @@ func TestConcurrency(t *testing.T) {
 	}
 
 	// Give them some time
-	writer.WaitFor(time.Second * 2)
+	writer.WaitFor(time.Second * 5)
 	expect.Equal(int32(0), writer.counter)
 	expect.Equal(len(results)*numSamples, int(atomic.LoadUint32(writes)))
 
 	q.Close()
-	reader.WaitFor(time.Second * 2)
+	reader.WaitFor(time.Second * 5)
 	expect.Equal(int32(0), reader.counter)
 
 	// Check results
