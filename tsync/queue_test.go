@@ -37,7 +37,7 @@ func TestConcurrency(t *testing.T) {
 
 	writer := WaitGroup{}
 	reader := WaitGroup{}
-	numSamples := 1000
+	numSamples := 100
 
 	results := make([]*uint64, 20)
 	writes := new(uint32)
@@ -50,7 +50,6 @@ func TestConcurrency(t *testing.T) {
 		go func() {
 			defer writer.Done()
 			for m := 0; m < numSamples; m++ {
-				time.Sleep(time.Microsecond)
 				expect.NoError(q.Push(idx))
 				atomic.AddUint32(writes, 1)
 			}
