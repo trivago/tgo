@@ -479,8 +479,8 @@ func (e Expect) MapNotSet(data interface{}, key interface{}) bool {
 
 // MapEqual returns true if MapSet equals true for the given key and Equal
 // returns true for the returned and given value.
-func (e Expect) MapEqual(data interface{}, key interface{}, value interface{}) bool {
-	mapVal := reflect.ValueOf(data)
+func (e Expect) MapEqual(mapData interface{}, key interface{}, value interface{}) bool {
+	mapVal := reflect.ValueOf(mapData)
 	keyVal := reflect.ValueOf(key)
 	valVal := mapVal.MapIndex(keyVal)
 	if !valVal.IsValid() {

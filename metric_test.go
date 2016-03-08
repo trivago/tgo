@@ -124,3 +124,33 @@ func TestMetricsReset(t *testing.T) {
 	expect.Nil(err)
 	expect.Equal(int64(0), count)
 }
+
+func TestFetchAndReset(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	mockMetric := getMockMetric()
+
+	mockMetric.New("foo")
+	mockMetric.Set("foo", int64(10))
+	foo, err := mockMetric.Get("foo")
+	expect.Nil(err)
+	expect.Equal(int64(10), foo)
+
+	mockMetric.New("bar")
+	mockMetric.Set("bar", int64(20))
+	bar, err := mockMetric.Get("bar")
+	expect.Nil(err)
+	expect.Equal(int64(20), bar)
+
+	values := mockMetric.FetchAndReset("foo", "bar")
+	expect.MapEqual(values, "foo", int64(10))
+	expect.MapEqual(values, "bar", int64(20))
+
+	foo, err = mockMetric.Get("foo")
+	expect.Nil(err)
+	expect.Equal(int64(0), foo)
+
+	bar, err = mockMetric.Get("bar")
+	expect.Nil(err)
+	expect.Equal(int64(0), bar)
+
+}

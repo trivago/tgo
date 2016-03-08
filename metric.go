@@ -50,8 +50,6 @@ func init() {
 	Metric.Set(MetricProcessStart, ProcessStartTime.Unix())
 
 	version := runtime.Version()
-	fmt.Println(version)
-
 	if version[0] == 'g' && version[1] == 'o' {
 		parts := strings.Split(version[2:], ".")
 		numericVersion := make([]uint64, tmath.MaxI(3, len(parts)))
@@ -187,18 +185,35 @@ func (met *metrics) Dump() ([]byte, error) {
 	return json.Marshal(Metric.store)
 }
 
-// ResetMetrics resets all registered key values to 0 expect for System Metrics.
+// ResetMetrics resets all registered key values to 0 expect for system Metrics.
 // This locks all writes in the process.
 func (met *metrics) ResetMetrics() {
 	met.mutex.Lock()
 	defer met.mutex.Unlock()
 
-	for key, _ := range met.store {
+	for key := range met.store {
 		switch key {
-		case MetricProcessStart, MetricGoRoutines:
+		case MetricProcessStart, MetricGoRoutines, MetricGoVersion:
 			// ignore
 		default:
-			met.store[key] = new(int64)
+			*met.store[key] = 0
 		}
 	}
+}
+
+// Reset resets all of the given keys to 0 and returns the value before the
+// reset as array. If a given metric does not exist it is ignored.
+// This locks all writes in the process.
+func (met *metrics) FetchAndReset(keys ...string) map[string]int64 {
+	met.mutex.Lock()
+	defer met.mutex.Unlock()
+	state := make(map[string]int64)
+
+	for _, key := range keys {
+		if val, exists := met.store[key]; exists {
+			state[key] = *val
+			*val = 0
+		}
+	}
+	return state
 }
