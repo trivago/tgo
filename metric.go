@@ -186,3 +186,19 @@ func (met *metrics) Dump() ([]byte, error) {
 	met.UpdateSystemMetrics()
 	return json.Marshal(Metric.store)
 }
+
+// ResetMetrics resets all registered key values to 0 expect for System Metrics.
+// This locks all writes in the process.
+func (met *metrics) ResetMetrics() {
+	met.mutex.Lock()
+	defer met.mutex.Unlock()
+
+	for key, _ := range met.store {
+		switch key {
+		case MetricProcessStart, MetricGoRoutines:
+			// ignore
+		default:
+			met.store[key] = new(int64)
+		}
+	}
+}

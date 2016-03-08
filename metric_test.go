@@ -108,3 +108,19 @@ func TestMetricsIncDec(t *testing.T) {
 	expect.Equal(int64(0), count)
 
 }
+
+func TestMetricsReset(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	mockMetric := getMockMetric()
+	mockMetric.New("MockMetric")
+
+	mockMetric.Set("MockMetric", int64(10))
+	count, err := mockMetric.Get("MockMetric")
+	expect.Nil(err)
+	expect.Equal(int64(10), count)
+
+	mockMetric.ResetMetrics()
+	count, err = mockMetric.Get("MockMetric")
+	expect.Nil(err)
+	expect.Equal(int64(0), count)
+}
