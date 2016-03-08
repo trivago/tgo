@@ -100,3 +100,29 @@ func BenchmarkChannelPush(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkQueuePop(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		q := NewQueue(100000)
+		for c := 0; c < 100000; c++ {
+			q.Push(123)
+		}
+
+		for c := 0; c < 100000; c++ {
+			q.Pop()
+		}
+	}
+}
+
+func BenchmarkChannelPop(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		q := make(chan interface{}, 100000)
+		for c := 0; c < 100000; c++ {
+			q <- 123
+		}
+
+		for c := 0; c < 100000; c++ {
+			<-q
+		}
+	}
+}
