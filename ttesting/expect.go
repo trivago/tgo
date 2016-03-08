@@ -444,6 +444,15 @@ func (e Expect) Leq(val1, val2 interface{}) bool {
 	return true
 }
 
+// OfType returns true if both values are of the same type
+func (e Expect) OfType(t interface{}, val interface{}) bool {
+	if reflect.TypeOf(t) != reflect.TypeOf(val) {
+		e.errorf("Expected type \"%t\" but found \"%t\"", t, val)
+		return false
+	}
+	return true
+}
+
 // MapSet returns true if the key is set in the given array
 func (e Expect) MapSet(data interface{}, key interface{}) bool {
 	mapVal := reflect.ValueOf(data)
