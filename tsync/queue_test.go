@@ -42,23 +42,20 @@ func TestConcurrency(t *testing.T) {
 	results := make([]*uint64, 20)
 	writes := new(uint32)
 
-	// Start writer
 	for i := 0; i < len(results); i++ {
 		results[i] = new(uint64)
 		idx := i
+		// Start writer
 		writer.Add(1)
 		go func() {
 			defer writer.Done()
 			for m := 0; m < numSamples; m++ {
-				time.Sleep(time.Microsecond * 100)
+				time.Sleep(time.Microsecond)
 				expect.NoError(q.Push(idx))
 				atomic.AddUint32(writes, 1)
 			}
 		}()
-	}
-
-	// Start reader
-	for i := 0; i < 10; i++ {
+		// start reader
 		reader.Add(1)
 		go func() {
 			defer reader.Done()
