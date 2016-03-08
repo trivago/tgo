@@ -149,7 +149,8 @@ func (q *Queue) IsDrained() bool {
 // 18 * 10^18 writes aka never if you are not doing more than 10^11 writes
 // per second (overflow after ~694 days).
 // Just to put this into perspective - an Intel Core i7 5960X at 3.5 Ghz can
-// do 336 * 10^9 ops per second.
+// do 336 * 10^9 ops per second (336ops/ns). A call to push allone costs about
+// 600-700µs so you won't come anywhere close to this.
 type queueAccess struct {
 	processing *uint64
 	next       *uint64
