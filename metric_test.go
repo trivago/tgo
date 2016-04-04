@@ -54,6 +54,17 @@ func TestMetricsSet(t *testing.T) {
 	count, err = mockMetric.Get("MockMetric")
 	expect.Nil(err)
 	expect.Equal(int64(4), count)
+
+	// test for setting a particular boolean value
+	mockMetric.SetB("MockMetric", true)
+	count, err = mockMetric.Get("MockMetric")
+	expect.Nil(err)
+	expect.Equal(int64(1), count)
+
+	mockMetric.SetB("MockMetric", false)
+	count, err = mockMetric.Get("MockMetric")
+	expect.Nil(err)
+	expect.Equal(int64(0), count)
 }
 
 func TestMetricsAddSub(t *testing.T) {
