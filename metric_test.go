@@ -20,10 +20,12 @@ import (
 	"testing"
 )
 
-func getMockMetric() metrics {
-	return metrics{
-		new(sync.RWMutex),
-		make(map[string]*int64),
+func getMockMetric() *Metrics {
+	return &Metrics{
+		store:      make(map[string]*int64),
+		rates:      make(map[string]*rate),
+		storeGuard: new(sync.RWMutex),
+		rateGuard:  new(sync.RWMutex),
 	}
 }
 
@@ -34,36 +36,36 @@ func TestMetricsSet(t *testing.T) {
 	// test for initialization to zero
 	mockMetric.New("MockMetric")
 	count, err := mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), count)
 
 	// test for setting to a particular value
 	mockMetric.Set("MockMetric", int64(5))
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(5), count)
 
 	// test for setting to a particular int
 	mockMetric.SetI("MockMetric", 5)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(5), count)
 
 	// test for setting to a particular float
 	mockMetric.SetF("MockMetric", 4.3)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(4), count)
 
 	// test for setting a particular boolean value
 	mockMetric.SetB("MockMetric", true)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(1), count)
 
 	mockMetric.SetB("MockMetric", false)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), count)
 }
 
@@ -74,32 +76,32 @@ func TestMetricsAddSub(t *testing.T) {
 	mockMetric.New("MockMetric")
 	mockMetric.Add("MockMetric", int64(1))
 	count, err := mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(1), count)
 
 	mockMetric.AddI("MockMetric", 1)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(2), count)
 
 	mockMetric.AddF("MockMetric", 2.4)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(4), count)
 
 	mockMetric.Sub("MockMetric", int64(1))
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(3), count)
 
 	mockMetric.SubF("MockMetric", 1.6)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(1), count)
 
 	mockMetric.SubI("MockMetric", 1)
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), count)
 }
 
@@ -110,12 +112,12 @@ func TestMetricsIncDec(t *testing.T) {
 
 	mockMetric.Inc("MockMetric")
 	count, err := mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(1), count)
 
 	mockMetric.Dec("MockMetric")
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), count)
 
 }
@@ -127,12 +129,12 @@ func TestMetricsReset(t *testing.T) {
 
 	mockMetric.Set("MockMetric", int64(10))
 	count, err := mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(10), count)
 
 	mockMetric.ResetMetrics()
 	count, err = mockMetric.Get("MockMetric")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), count)
 }
 
@@ -143,13 +145,13 @@ func TestFetchAndReset(t *testing.T) {
 	mockMetric.New("foo")
 	mockMetric.Set("foo", int64(10))
 	foo, err := mockMetric.Get("foo")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(10), foo)
 
 	mockMetric.New("bar")
 	mockMetric.Set("bar", int64(20))
 	bar, err := mockMetric.Get("bar")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(20), bar)
 
 	values := mockMetric.FetchAndReset("foo", "bar")
@@ -157,11 +159,11 @@ func TestFetchAndReset(t *testing.T) {
 	expect.MapEqual(values, "bar", int64(20))
 
 	foo, err = mockMetric.Get("foo")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), foo)
 
 	bar, err = mockMetric.Get("bar")
-	expect.Nil(err)
+	expect.NoError(err)
 	expect.Equal(int64(0), bar)
 
 }
