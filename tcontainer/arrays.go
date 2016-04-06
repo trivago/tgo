@@ -83,3 +83,37 @@ func (s Uint64Slice) Set(v uint64) {
 		s[i] = v
 	}
 }
+
+// Float32Slice is a typedef to allow sortable float32 slices
+type Float32Slice []float32
+
+func (s Float32Slice) Len() int {
+	return len(s)
+}
+
+func (s Float32Slice) Less(i, j int) bool {
+	return s[i] < s[j]
+}
+
+func (s Float32Slice) Swap(i, j int) {
+	t := s[i]
+	s[i] = s[j]
+	s[j] = t
+}
+
+// Sort is a shortcut for sort.Sort(s)
+func (s Float32Slice) Sort() {
+	sort.Sort(s)
+}
+
+// IsSorted is a shortcut for sort.IsSorted(s)
+func (s Float32Slice) IsSorted() bool {
+	return sort.IsSorted(s)
+}
+
+// Set sets all values in this slice to the given value
+func (s Float32Slice) Set(v float32) {
+	for i := range s {
+		s[i] = v
+	}
+}

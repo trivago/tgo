@@ -75,3 +75,31 @@ func TestUint64SliceSet(t *testing.T) {
 		expect.Equal(uint64(1), v)
 	}
 }
+
+func TestFloat32SliceSort(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	array := make(Float32Slice, 10)
+
+	for i := range array {
+		array[i] = rand.Float32()
+	}
+
+	// force not sorted
+	array[0] = 1
+	array[9] = 0
+
+	expect.False(array.IsSorted())
+	array.Sort()
+	expect.True(array.IsSorted())
+}
+
+func TestFloat32SliceSet(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	array := make(Float32Slice, 10)
+
+	array.Set(float32(1))
+
+	for _, v := range array {
+		expect.Equal(float32(1), v)
+	}
+}

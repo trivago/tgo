@@ -70,6 +70,7 @@ type rate struct {
 	value      int64
 	numMedians int
 	index      int
+	relative   bool
 }
 
 // Metric allows any part of gollum to store and/or modify metric values by
@@ -142,7 +143,9 @@ func (met *Metrics) New(name string) {
 // a value >= numSamples will build a median over all samples. Any other
 // value will divide the stored samples into the given number of groups and
 // build a median over the mean of all these groups.
-func (met *Metrics) NewRate(baseMetric string, name string, numSamples uint8, numMedianSamples uint8) error {
+// The relative parameter defines if the samples are taking by storing the
+// current value (false) or the difference to the last sample (true).
+func (met *Metrics) NewRate(baseMetric string, name string, numSamples uint8, numMedianSamples uint8, relative bool) error {
 	met.storeGuard.RLock()
 	if _, exists := met.store[baseMetric]; !exists {
 		met.storeGuard.RUnlock()
@@ -153,8 +156,12 @@ func (met *Metrics) NewRate(baseMetric string, name string, numSamples uint8, nu
 	met.rateGuard.Lock()
 	defer met.rateGuard.Unlock()
 
-	if _, exists := met.rates[name]; !exists {
+	if _, exists := met.rates[name]; exists {
 		return fmt.Errorf("Rate %s is already registered", name)
+	}
+
+	if numMedianSamples >= numSamples {
+		numMedianSamples = 0
 	}
 
 	met.rates[name] = &rate{
@@ -164,6 +171,7 @@ func (met *Metrics) NewRate(baseMetric string, name string, numSamples uint8, nu
 		lastSample: 0,
 		value:      0,
 		index:      0,
+		relative:   relative,
 	}
 
 	return nil
@@ -389,47 +397,45 @@ func (met *Metrics) updateRates() {
 
 	for _, rate := range met.rates {
 		sample := snapshot[rate.metric]
-		sampleIdx := rate.index % len(rate.samples)
-		rate.samples[sampleIdx] = sample - rate.lastSample
-		rate.index++
-		rate.lastSample = sample
-
-		// Calculate value
-		switch {
-		case rate.numMedians == 1:
-			// Mean of all values
-			total := int64(0)
-			for _, v := range rate.samples {
-				total += v
-			}
-			rate.value = total / int64(len(rate.samples))
-
-		case rate.numMedians == 0, rate.numMedians >= len(rate.samples):
-			// Median of all values
-			values := make(tcontainer.Int64Slice, len(rate.samples))
-			copy(values, rate.samples)
-			values.Sort()
-			rate.value = values[len(values)/2]
-
-		default:
-			// Median of means
-			blockSize := len(rate.samples) / rate.numMedians
-			blocks := make(tcontainer.Int64Slice, rate.numMedians)
-			for i, v := range rate.samples {
-				blocks[i/blockSize] += int64(v)
-			}
-			values := make(tcontainer.Int64Slice, rate.numMedians)
-			for i, b := range blocks {
-				offset := i * blockSize
-				if offset+blockSize > len(blocks) {
-					size := len(blocks) - offset
-					values[i] = b / int64(size)
-				} else {
-					values[i] = b / int64(blockSize)
-				}
-			}
-			values.Sort()
-			rate.value = values[len(values)/2]
+		if rate.relative {
+			rate.samples[rate.index] = sample - rate.lastSample
+			rate.lastSample = sample
+		} else {
+			rate.samples[rate.index] = sample
 		}
+		rate.index = (rate.index + 1) % len(rate.samples)
+		met.cacheRateValue(rate)
+	}
+}
+
+func (met *Metrics) cacheRateValue(r *rate) {
+	switch {
+	case r.numMedians == 1:
+		// Mean of all values
+		total := int64(0)
+		for _, v := range r.samples {
+			total += v
+		}
+		r.value = total / int64(len(r.samples))
+
+	case r.numMedians == 0:
+		// Median of all values
+		values := make(tcontainer.Int64Slice, len(r.samples))
+		copy(values, r.samples)
+		values.Sort()
+		r.value = values[len(r.samples)/2]
+
+	default:
+		// Median of means
+		blockSize := float32(len(r.samples)) / float32(r.numMedians)
+		blocks := make(tcontainer.Float32Slice, r.numMedians)
+
+		for i, s := range r.samples {
+			blockIdx := int(float32(i) / blockSize)
+			blocks[blockIdx] += float32(s)
+		}
+
+		blocks.Sort()
+		r.value = int64(blocks[r.numMedians/2] / blockSize)
 	}
 }

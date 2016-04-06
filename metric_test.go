@@ -29,6 +29,91 @@ func getMockMetric() *Metrics {
 	}
 }
 
+func TestRateAbsolute(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	mockMetric := getMockMetric()
+
+	mockMetric.New("base")
+	err := mockMetric.NewRate("invalid", "mean", 10, 0, false)
+	expect.NotNil(err)
+
+	err = mockMetric.NewRate("base", "median", 10, 0, false)
+	expect.NoError(err)
+	err = mockMetric.NewRate("base", "mean", 10, 1, false)
+	expect.NoError(err)
+	err = mockMetric.NewRate("base", "median3", 10, 3, false)
+	expect.NoError(err)
+
+	for i := 0; i < 10; i++ {
+		if i < 5 {
+			mockMetric.Set("base", 2)
+		} else {
+			mockMetric.Set("base", 4)
+		}
+		mockMetric.updateRates()
+	}
+
+	// values : 2  2  2  2  2  4  4  4  4  4
+	// mean   : 30 / 10 = 3
+	// median : 2  2  2  2  2 [4] 4  4  4  4
+	// med3   :[   2      ][  >3<  ][   4   ]
+
+	value, err := mockMetric.Get("mean")
+	expect.NoError(err)
+	expect.Equal(int64(3), value)
+
+	value, err = mockMetric.Get("median")
+	expect.NoError(err)
+	expect.Equal(int64(4), value)
+
+	value, err = mockMetric.Get("median3")
+	expect.NoError(err)
+	expect.Equal(int64(3), value)
+}
+
+func TestRateRelative(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	mockMetric := getMockMetric()
+
+	mockMetric.New("base")
+	err := mockMetric.NewRate("invalid", "mean", 9, 0, true)
+	expect.NotNil(err)
+
+	err = mockMetric.NewRate("base", "median", 9, 0, true)
+	expect.NoError(err)
+	err = mockMetric.NewRate("base", "mean", 9, 1, true)
+	expect.NoError(err)
+	err = mockMetric.NewRate("base", "median3", 9, 3, true)
+	expect.NoError(err)
+
+	for i := 1; i < 10; i++ {
+		if i < 5 {
+			mockMetric.Set("base", int64(i*2))
+		} else {
+			mockMetric.Set("base", int64(i*3))
+		}
+		mockMetric.updateRates()
+	}
+
+	// values : 2  4  6  8 15 18 21 24 27
+	// diff   : 2  2  2  2  7  3  3  3  3
+	// mean   : 27 / 9 = 3
+	// median : 2  2  2  2 [3] 3  3  3  7
+	// med3   :[   2   ][  >3<  ][   4   ]
+
+	value, err := mockMetric.Get("mean")
+	expect.NoError(err)
+	expect.Equal(int64(3), value)
+
+	value, err = mockMetric.Get("median")
+	expect.NoError(err)
+	expect.Equal(int64(3), value)
+
+	value, err = mockMetric.Get("median3")
+	expect.NoError(err)
+	expect.Equal(int64(3), value)
+}
+
 func TestMetricsSet(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()
