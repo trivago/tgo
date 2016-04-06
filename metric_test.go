@@ -18,6 +18,7 @@ import (
 	"github.com/trivago/tgo/ttesting"
 	"sync"
 	"testing"
+	"time"
 )
 
 func getMockMetric() *Metrics {
@@ -32,16 +33,17 @@ func getMockMetric() *Metrics {
 func TestRateAbsolute(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()
+	defer mockMetric.Close()
 
 	mockMetric.New("base")
-	err := mockMetric.NewRate("invalid", "mean", 10, 0, false)
+	err := mockMetric.NewRate("invalid", "mean", time.Hour, 10, 0, false)
 	expect.NotNil(err)
 
-	err = mockMetric.NewRate("base", "median", 10, 0, false)
+	err = mockMetric.NewRate("base", "median", time.Hour, 10, 0, false)
 	expect.NoError(err)
-	err = mockMetric.NewRate("base", "mean", 10, 1, false)
+	err = mockMetric.NewRate("base", "mean", time.Hour, 10, 1, false)
 	expect.NoError(err)
-	err = mockMetric.NewRate("base", "median3", 10, 3, false)
+	err = mockMetric.NewRate("base", "median3", time.Hour, 10, 3, false)
 	expect.NoError(err)
 
 	for i := 0; i < 10; i++ {
@@ -50,7 +52,9 @@ func TestRateAbsolute(t *testing.T) {
 		} else {
 			mockMetric.Set("base", 4)
 		}
-		mockMetric.updateRates()
+		for _, r := range mockMetric.rates {
+			mockMetric.updateRate(r)
+		}
 	}
 
 	// values : 2  2  2  2  2  4  4  4  4  4
@@ -74,16 +78,17 @@ func TestRateAbsolute(t *testing.T) {
 func TestRateRelative(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()
+	defer mockMetric.Close()
 
 	mockMetric.New("base")
-	err := mockMetric.NewRate("invalid", "mean", 9, 0, true)
+	err := mockMetric.NewRate("invalid", "mean", time.Hour, 9, 0, true)
 	expect.NotNil(err)
 
-	err = mockMetric.NewRate("base", "median", 9, 0, true)
+	err = mockMetric.NewRate("base", "median", time.Hour, 9, 0, true)
 	expect.NoError(err)
-	err = mockMetric.NewRate("base", "mean", 9, 1, true)
+	err = mockMetric.NewRate("base", "mean", time.Hour, 9, 1, true)
 	expect.NoError(err)
-	err = mockMetric.NewRate("base", "median3", 9, 3, true)
+	err = mockMetric.NewRate("base", "median3", time.Hour, 9, 3, true)
 	expect.NoError(err)
 
 	for i := 1; i < 10; i++ {
@@ -92,7 +97,9 @@ func TestRateRelative(t *testing.T) {
 		} else {
 			mockMetric.Set("base", int64(i*3))
 		}
-		mockMetric.updateRates()
+		for _, r := range mockMetric.rates {
+			mockMetric.updateRate(r)
+		}
 	}
 
 	// values : 2  4  6  8 15 18 21 24 27

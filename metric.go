@@ -58,7 +58,6 @@ func init() {
 type Metrics struct {
 	store      map[string]*int64
 	rates      map[string]*rate
-	ticker     *time.Ticker
 	storeGuard *sync.RWMutex
 	rateGuard  *sync.RWMutex
 }
@@ -66,6 +65,7 @@ type Metrics struct {
 type rate struct {
 	metric     string
 	samples    tcontainer.Int64Slice
+	ticker     *time.Ticker
 	lastSample int64
 	value      int64
 	numMedians int
@@ -92,7 +92,6 @@ func NewMetrics() *Metrics {
 	metrics := &Metrics{
 		store:      make(map[string]*int64),
 		rates:      make(map[string]*rate),
-		ticker:     time.NewTicker(time.Second),
 		storeGuard: new(sync.RWMutex),
 		rateGuard:  new(sync.RWMutex),
 	}
@@ -116,13 +115,14 @@ func NewMetrics() *Metrics {
 		metrics.SetI(MetricGoVersion, int(numericVersion[0]*10000+numericVersion[1]*100+numericVersion[2]))
 	}
 
-	go metrics.rateSampler()
 	return metrics
 }
 
 // Close stops the internal go routines used for e.g. sampling
 func (met *Metrics) Close() {
-	met.ticker.Stop()
+	for _, r := range met.rates {
+		r.ticker.Stop()
+	}
 }
 
 // New creates a new metric under the given name with a value of 0
@@ -145,7 +145,7 @@ func (met *Metrics) New(name string) {
 // build a median over the mean of all these groups.
 // The relative parameter defines if the samples are taking by storing the
 // current value (false) or the difference to the last sample (true).
-func (met *Metrics) NewRate(baseMetric string, name string, numSamples uint8, numMedianSamples uint8, relative bool) error {
+func (met *Metrics) NewRate(baseMetric string, name string, interval time.Duration, numSamples uint8, numMedianSamples uint8, relative bool) error {
 	met.storeGuard.RLock()
 	if _, exists := met.store[baseMetric]; !exists {
 		met.storeGuard.RUnlock()
@@ -164,15 +164,24 @@ func (met *Metrics) NewRate(baseMetric string, name string, numSamples uint8, nu
 		numMedianSamples = 0
 	}
 
-	met.rates[name] = &rate{
+	newRate := &rate{
 		metric:     baseMetric,
 		samples:    make(tcontainer.Int64Slice, numSamples),
 		numMedians: int(numMedianSamples),
 		lastSample: 0,
 		value:      0,
 		index:      0,
+		ticker:     time.NewTicker(interval),
 		relative:   relative,
 	}
+
+	met.rates[name] = newRate
+
+	go func() {
+		for isRunning := true; isRunning; _, isRunning = <-newRate.ticker.C {
+			met.updateRate(newRate)
+		}
+	}()
 
 	return nil
 }
@@ -358,7 +367,10 @@ func (met *Metrics) FetchAndReset(keys ...string) map[string]int64 {
 	return state
 }
 
-func (met *Metrics) updateSystemMetrics() {
+// UpdateSystemMetrics updates all default or system based metrics like memory
+// consumption and number of go routines. This function is not called
+// automatically.
+func (met *Metrics) UpdateSystemMetrics() {
 	met.storeGuard.RLock()
 	defer met.storeGuard.RUnlock()
 
@@ -371,19 +383,7 @@ func (met *Metrics) updateSystemMetrics() {
 	met.Set(MetricMemoryNumObjects, int64(stats.HeapObjects))
 }
 
-func (met *Metrics) rateSampler() {
-	for {
-		_, isRunning := <-met.ticker.C
-		if !isRunning {
-			return // ### return, ticker stopped ###
-		}
-
-		met.updateSystemMetrics()
-		met.updateRates()
-	}
-}
-
-func (met *Metrics) updateRates() {
+func (met *Metrics) updateRate(r *rate) {
 	// Read current values in a snapshot to avoid deadlocks
 	snapshot := make(map[string]int64)
 	met.storeGuard.RLock()
@@ -395,20 +395,17 @@ func (met *Metrics) updateRates() {
 	met.rateGuard.Lock()
 	defer met.rateGuard.Unlock()
 
-	for _, rate := range met.rates {
-		sample := snapshot[rate.metric]
-		if rate.relative {
-			rate.samples[rate.index] = sample - rate.lastSample
-			rate.lastSample = sample
-		} else {
-			rate.samples[rate.index] = sample
-		}
-		rate.index = (rate.index + 1) % len(rate.samples)
-		met.cacheRateValue(rate)
+	// Sample metric
+	sample := snapshot[r.metric]
+	if r.relative {
+		r.samples[r.index] = sample - r.lastSample
+		r.lastSample = sample
+	} else {
+		r.samples[r.index] = sample
 	}
-}
+	r.index = (r.index + 1) % len(r.samples)
 
-func (met *Metrics) cacheRateValue(r *rate) {
+	// cache value
 	switch {
 	case r.numMedians == 1:
 		// Mean of all values
