@@ -49,17 +49,17 @@ func TestPop(t *testing.T) {
 	var err mockError
 
 	stack.Push(err)
-	expect.Equal(len(stack.errors), 1)
+	expect.Equal(len(stack.Errors()), 1)
 	expect.NotNil(stack.OrNil())
 
 	stack.Clear()
-	expect.Equal(len(stack.errors), 0)
+	expect.Equal(len(stack.Errors()), 0)
 	expect.Nil(stack.OrNil())
 
 	stack.Push(err)
-	expect.Greater(len(stack.errors), 0)
+	expect.Greater(len(stack.Errors()), 0)
 
 	err2 := stack.Pop()
 	expect.Equal(err2, err)
-	expect.Equal(len(stack.errors), 0)
+	expect.Equal(len(stack.Errors()), 0)
 }
