@@ -17,6 +17,7 @@ package tgo
 import (
 	"log"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"time"
 )
@@ -56,7 +57,8 @@ func ReturnAfter(runtimeLimit time.Duration, callback func()) bool {
 // Typically used as "defer RecoverShutdown()".
 func RecoverShutdown() {
 	if r := recover(); r != nil {
-		log.Print("Panic triggered shutdown: ", r)
+		_, file, line, _ := runtime.Caller(1)
+		log.Printf("%s:%d: Panic shutdown: %s", file, line, r)
 		log.Print(string(debug.Stack()))
 		ShutdownCallback()
 	}
@@ -66,7 +68,8 @@ func RecoverShutdown() {
 // function. Typically used as "defer RecoverTrace()".
 func RecoverTrace() {
 	if r := recover(); r != nil {
-		log.Print("Panic ignored: ", r)
+		_, file, line, _ := runtime.Caller(1)
+		log.Printf("%s:%d: Panic ignored: %s", file, line, r)
 		log.Print(string(debug.Stack()))
 	}
 }
