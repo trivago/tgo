@@ -18,7 +18,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"runtime/debug"
 	"time"
 )
 
@@ -57,9 +56,14 @@ func ReturnAfter(runtimeLimit time.Duration, callback func()) bool {
 // Typically used as "defer RecoverShutdown()".
 func RecoverShutdown() {
 	if r := recover(); r != nil {
-		_, file, line, _ := runtime.Caller(3)
-		log.Printf("%s:%d: Panic shutdown: %s", file, line, r)
-		log.Print(string(debug.Stack()))
+		log.Printf("Panic shutdown: %s", r)
+		for i := 0; i < 10; i++ {
+			_, file, line, ok := runtime.Caller(i)
+			if !ok {
+				break // ### break, could not retrieve ###
+			}
+			log.Printf("\t%s:%d", file, line)
+		}
 		ShutdownCallback()
 	}
 }
@@ -68,9 +72,14 @@ func RecoverShutdown() {
 // function. Typically used as "defer RecoverTrace()".
 func RecoverTrace() {
 	if r := recover(); r != nil {
-		_, file, line, _ := runtime.Caller(3)
-		log.Printf("%s:%d: Panic ignored: %s", file, line, r)
-		log.Print(string(debug.Stack()))
+		log.Printf("Panic ignored: %s", r)
+		for i := 0; i < 10; i++ {
+			_, file, line, ok := runtime.Caller(i)
+			if !ok {
+				break // ### break, could not retrieve ###
+			}
+			log.Printf("\t%s:%d", file, line)
+		}
 	}
 }
 
