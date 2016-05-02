@@ -1,4 +1,4 @@
-// Copyright 2015 trivago GmbH
+// Copyright 2015-2016 trivago GmbH
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package tgo
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/trivago/tgo/tcontainer"
-	"github.com/trivago/tgo/tmath"
 	"math"
 	"runtime"
 	"strconv"
@@ -26,6 +24,9 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/trivago/tgo/tcontainer"
+	"github.com/trivago/tgo/tmath"
 )
 
 const (
