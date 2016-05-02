@@ -47,25 +47,25 @@ type Queue struct {
 	read     queueAccess
 	capacity uint64
 	locked   *int32
-	priority SpinPriority
+	spin     Spinner
 	items    []interface{}
 }
 
 // NewQueue creates a new queue with medium spinning priority
 func NewQueue(capacity uint32) Queue {
-	return NewQueueWithPriority(capacity, SpinPriorityMedium)
+	return NewQueueWithSpinner(capacity, NewSpinner(SpinPriorityMedium))
 }
 
-// NewQueueWithPriority allows to set the spinning priority of the queue to
+// NewQueueWithSpinner allows to set the spinning priority of the queue to
 // be created.
-func NewQueueWithPriority(capacity uint32, priority SpinPriority) Queue {
+func NewQueueWithSpinner(capacity uint32, spinner Spinner) Queue {
 	return Queue{
 		items:    make([]interface{}, capacity),
 		read:     newQueueAccess(),
 		write:    newQueueAccess(),
 		locked:   new(int32),
 		capacity: uint64(capacity),
-		priority: priority,
+		spin:     spinner,
 	}
 }
 
@@ -79,7 +79,7 @@ func (q *Queue) Push(item interface{}) error {
 	// Get ticket and slot
 	ticket := atomic.AddUint64(q.write.next, 1) - 1
 	slot := ticket % q.capacity
-	spin := NewSpinner(q.priority)
+	spin := q.spin
 
 	// Wait for pending reads on slot
 	for ticket-atomic.LoadUint64(q.read.processing) >= q.capacity {
@@ -108,7 +108,7 @@ func (q *Queue) Pop() interface{} {
 	// Get ticket andd slot
 	ticket := atomic.AddUint64(q.read.next, 1) - 1
 	slot := ticket % q.capacity
-	spin := NewSpinner(q.priority)
+	spin := q.spin
 
 	// Wait for slot to be written to
 	for ticket >= atomic.LoadUint64(q.write.processing) {
