@@ -16,6 +16,7 @@ package tsync
 
 import (
 	"github.com/trivago/tgo/ttesting"
+	"runtime"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -66,6 +67,7 @@ func TestConcurrency(t *testing.T) {
 			for m := 0; m < numSamples; m++ {
 				expect.NoError(q.Push(idx))
 				atomic.AddUint32(writes, 1)
+				runtime.Gosched()
 			}
 		}()
 		// start reader
@@ -77,6 +79,7 @@ func TestConcurrency(t *testing.T) {
 				if value != nil {
 					idx, _ := value.(int)
 					atomic.AddUint64(results[idx], 1)
+					runtime.Gosched()
 				}
 			}
 		}()
