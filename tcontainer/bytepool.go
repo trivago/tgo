@@ -95,6 +95,10 @@ func NewBytePoolWithSize(tinyChunkCount int, smallChunkCount int, mediumChunkCou
 // If possible this slice is coming from a pool. Slices are automatically
 // returned to the pool. No additional action is necessary.
 func (b *BytePool) Get(size int) []byte {
+	if size == 0 {
+		return []byte{}
+	}
+
 	slab, normalized := b.getSlab(size)
 	if slab == nil {
 		return make([]byte, size) // ### return, oversized ###
