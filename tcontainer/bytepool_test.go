@@ -73,7 +73,7 @@ func allocateWaste(pool *BytePool, expect ttesting.Expect) {
 
 func TestBytePoolRecycle(t *testing.T) {
 	expect := ttesting.NewExpect(t)
-	pool := NewBytePool()
+	pool := NewBytePoolWithSize(1, 1, 1, 1)
 
 	expect.Nil(pool.tiny.slabs[0])
 	allocateWaste(&pool, expect)
@@ -86,4 +86,9 @@ func TestBytePoolRecycle(t *testing.T) {
 	})
 
 	expect.Equal(1, len(pool.tiny.slabs[0]))
+
+	data := pool.Get(32)
+	for i := 0; i < 32; i++ {
+		expect.Equal(byte(i), data[i])
+	}
 }

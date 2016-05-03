@@ -99,18 +99,17 @@ func (b *BytePool) Get(size int) []byte {
 		return []byte{}
 	}
 
-	slab, normalized := b.getSlab(size)
+	slab := b.getSlab(size)
 	if slab == nil {
 		return make([]byte, size) // ### return, oversized ###
 	}
 
 	select {
 	case buffer := <-slab:
-		return b.withFinalizer(buffer[:size]) // ### return, cached ###
+		return buffer[:size] // ### return, cached ###
 
 	default:
-		buffer := make([]byte, normalized)
-		return b.withFinalizer(buffer[:size]) // ### return, new chunk ###
+		return make([]byte, size) // ### return, empty pool ###
 	}
 }
 
@@ -123,27 +122,27 @@ func newSlabsList(numSlabs int, numChunks int, chunkSize int) slabsList {
 	}
 }
 
-func (b *BytePool) getSlab(size int) (slab, int) {
+func (b *BytePool) getSlab(size int) slab {
 	switch {
 
 	case size <= tinyChunkMax:
-		return b.tiny.fetch(size)
+		return b.tiny.fetch(size, b)
 
 	case size <= smallChunkMax:
-		return b.small.fetch(size)
+		return b.small.fetch(size, b)
 
 	case size <= mediumChunkMax:
-		return b.medium.fetch(size)
+		return b.medium.fetch(size, b)
 
 	case size <= largeChunkMax:
-		return b.large.fetch(size)
+		return b.large.fetch(size, b)
 
 	default:
-		return nil, size // ### return, too large ###
+		return nil // ### return, too large ###
 	}
 }
 
-func (s *slabsList) fetch(size int) (slab, int) {
+func (s *slabsList) fetch(size int, b *BytePool) slab {
 	slabIdx := size / (s.chunkSize + 1)
 	chunks := s.slabs[slabIdx]
 
@@ -154,24 +153,28 @@ func (s *slabsList) fetch(size int) (slab, int) {
 
 		if chunks = s.slabs[slabIdx]; chunks == nil {
 			chunks = make(slab, s.numChunks)
+			chunkSize := (slabIdx + 1) * s.chunkSize
+
+			// Prepopulate slab
+			for i := 0; i < s.numChunks; i++ {
+				buffer := make([]byte, chunkSize)
+				runtime.SetFinalizer(&buffer, b.put)
+				chunks <- buffer
+			}
+
 			s.slabs[slabIdx] = chunks
 		}
 	}
 
-	return chunks, (slabIdx + 1) * s.chunkSize
+	return chunks
 }
 
 func (b *BytePool) put(buffer *[]byte) {
-	slab, _ := b.getSlab(cap(*buffer))
+	slab := b.getSlab(cap(*buffer))
 	select {
 	case slab <- *buffer:
-		// store, pool has capacity
+		runtime.SetFinalizer(buffer, b.put)
 	default:
 		// discard, pool is full
 	}
-}
-
-func (b *BytePool) withFinalizer(buffer []byte) []byte {
-	runtime.SetFinalizer(&buffer, b.put)
-	return buffer
 }
