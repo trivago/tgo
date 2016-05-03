@@ -32,14 +32,14 @@ func NewByteWriter(buffer *[]byte) ByteWriter {
 }
 
 // Reset sets the length of the slize to 0.
-func (b *ByteWriter) Reset() {
+func (b ByteWriter) Reset() {
 	*b.buffer = (*b.buffer)[:0]
 }
 
 // Write writes data to the wrapped slice if there is enough space available.
 // If not, data is written until the wrapped slice has reached its capacity
 // and io.EOF is returned.
-func (b *ByteWriter) Write(data []byte) (int, error) {
+func (b ByteWriter) Write(data []byte) (int, error) {
 	start := len(*b.buffer)
 	size := len(data)
 	capacity := cap(*b.buffer)
