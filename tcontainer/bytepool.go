@@ -71,15 +71,14 @@ const (
 )
 
 // NewBytePool creates a new bytepool. This will call NewBytePoolWithSize
-// with 1000, 100, 100, 10.
+// with 10000, 1000, 100, 10.
 func NewBytePool() BytePool {
-	return NewBytePoolWithSize(1000, 100, 100, 10)
+	return NewBytePoolWithSize(10000, 1000, 100, 10)
 }
 
 // NewBytePoolWithSize creates a new BytePool. You can define the maximum
 // number of chunks ([]byte) cached per storage size. Chunks wills always be
-// returned, even if the cache is empty. If there are more chunks "in flight"
-// than allowed, excess chunks will be garbage collected.
+// returned, even if the cache is empty. Excess chunks will be garbage collected.
 // Storage sizes in bytes: tiny: 1-960, small: 1024-9216, medium: 10240-92160.
 // large: 102400-1024000. Each sorage size holds up to 10 slabs.
 func NewBytePoolWithSize(tinyChunkCount int, smallChunkCount int, mediumChunkCount int, largeChunkCount int) BytePool {
@@ -107,7 +106,6 @@ func (b *BytePool) Get(size int) []byte {
 	select {
 	case buffer := <-slab:
 		return buffer[:size] // ### return, cached ###
-
 	default:
 		return make([]byte, size) // ### return, empty pool ###
 	}
@@ -143,11 +141,11 @@ func (b *BytePool) getSlab(size int) slab {
 }
 
 func (s *slabsList) fetch(size int, b *BytePool) slab {
-	slabIdx := size / (s.chunkSize + 1)
+	slabIdx := (size - 1) / s.chunkSize
 	chunks := s.slabs[slabIdx]
 
 	if chunks == nil {
-		// First initialization can be racey
+		// First initialization can be racy
 		s.guard.Lock()
 		defer s.guard.Unlock()
 
