@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-func TestFunctionality(t *testing.T) {
+func TestQueueFunctionality(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	q := NewQueue(1)
 
@@ -46,7 +46,7 @@ func TestFunctionality(t *testing.T) {
 	expect.OfType(LockedError{}, err)
 }
 
-func TestConcurrency(t *testing.T) {
+func TestQueueConcurrency(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	q := NewQueueWithSpinner(100, NewCustomSpinner(10, time.Millisecond))
 
