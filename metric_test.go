@@ -257,5 +257,4 @@ func TestFetchAndReset(t *testing.T) {
 	bar, err = mockMetric.Get("bar")
 	expect.NoError(err)
 	expect.Equal(int64(0), bar)
-
 }

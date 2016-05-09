@@ -50,9 +50,9 @@ const (
 // This value is also stored in the metric MetricProcessStart
 var ProcessStartTime time.Time
 
-func init() {
-	ProcessStartTime = time.Now()
-}
+// Metric allows any part of gollum to store and/or modify metric values by
+// name.
+var Metric = (*Metrics)(nil)
 
 // Metrics is the container struct for runtime metrics that can be used with
 // the metrics server.
@@ -69,14 +69,14 @@ type rate struct {
 	ticker     *time.Ticker
 	lastSample int64
 	value      int64
+	index      uint64
 	numMedians int
-	index      int
 	relative   bool
 }
 
-// Metric allows any part of gollum to store and/or modify metric values by
-// name.
-var Metric = (*Metrics)(nil)
+func init() {
+	ProcessStartTime = time.Now()
+}
 
 // EnableGlobalMetrics initializes the Metric global variable (if it is not nil)
 // This function is not threadsafe and should be called once directly after the
@@ -190,98 +190,96 @@ func (met *Metrics) NewRate(baseMetric string, name string, interval time.Durati
 	return nil
 }
 
-// Set sets a given metric to a given value. This operation is atomic.
-func (met *Metrics) Set(name string, value int64) {
+func (met *Metrics) get(name string) *int64 {
 	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.StoreInt64(met.store[name], value)
+	if v, exists := met.store[name]; exists {
+		met.storeGuard.RUnlock()
+		return v // ### return, exists ###
+	}
+	met.storeGuard.RUnlock()
+
+	// Create new metric
+	met.storeGuard.Lock()
+	defer met.storeGuard.Lock()
+
+	if v, exists := met.store[name]; exists {
+		return v // ### return, created by other thread ###
+	}
+
+	v := new(int64)
+	met.store[name] = v
+	return v
+}
+
+// Set sets a given metric to a given value.
+func (met *Metrics) Set(name string, value int64) {
+	atomic.StoreInt64(met.get(name), value)
 }
 
 // SetI is Set for int values (conversion to int64)
 func (met *Metrics) SetI(name string, value int) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.StoreInt64(met.store[name], int64(value))
+	atomic.StoreInt64(met.get(name), int64(value))
 }
 
 // SetF is Set for float64 values (conversion to int64)
 func (met *Metrics) SetF(name string, value float64) {
 	rounded := math.Floor(value + 0.5)
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.StoreInt64(met.store[name], int64(rounded))
+	atomic.StoreInt64(met.get(name), int64(rounded))
 }
 
 // SetB is Set for boolean values (conversion to 0/1)
 func (met *Metrics) SetB(name string, value bool) {
-	ivalue := 0
 	if value {
-		ivalue = 1
+		atomic.StoreInt64(met.get(name), int64(1))
+	} else {
+		atomic.StoreInt64(met.get(name), int64(0))
 	}
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.StoreInt64(met.store[name], int64(ivalue))
+
 }
 
-// Inc adds 1 to a given metric. This operation is atomic.
+// Inc adds 1 to a given metric.
 func (met *Metrics) Inc(name string) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], 1)
+	atomic.AddInt64(met.get(name), 1)
 }
 
-// Dec subtracts 1 from a given metric. This operation is atomic.
+// Dec subtracts 1 from a given metric.
 func (met *Metrics) Dec(name string) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], -1)
+	atomic.AddInt64(met.get(name), -1)
 }
 
-// Add adds a number to a given metric. This operation is atomic.
+// Add adds a number to a given metric.
 func (met *Metrics) Add(name string, value int64) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], value)
+	atomic.AddInt64(met.get(name), value)
 }
 
 // AddI is Add for int values (conversion to int64)
 func (met *Metrics) AddI(name string, value int) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], int64(value))
+	atomic.AddInt64(met.get(name), int64(value))
 }
 
 // AddF is Add for float64 values (conversion to int64)
 func (met *Metrics) AddF(name string, value float64) {
 	rounded := math.Floor(value + 0.5)
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], int64(rounded))
+	atomic.AddInt64(met.get(name), int64(rounded))
 }
 
-// Sub subtracts a number to a given metric. This operation is atomic.
+// Sub subtracts a number to a given metric.
 func (met *Metrics) Sub(name string, value int64) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], -value)
+	atomic.AddInt64(met.get(name), -value)
 }
 
 // SubI is SubI for int values (conversion to int64)
 func (met *Metrics) SubI(name string, value int) {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], int64(-value))
+	atomic.AddInt64(met.get(name), int64(-value))
 }
 
 // SubF is Sub for float64 values (conversion to int64)
 func (met *Metrics) SubF(name string, value float64) {
 	rounded := math.Floor(value + 0.5)
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-	atomic.AddInt64(met.store[name], int64(-rounded))
+	atomic.AddInt64(met.get(name), int64(-rounded))
 }
 
-// Get returns the value of a given metric or rate. This operation is atomic.
+// Get returns the value of a given metric or rate.
 // If the value does not exists error is non-nil and the returned value is 0.
 func (met *Metrics) Get(name string) (int64, error) {
 	met.storeGuard.RLock()
@@ -375,9 +373,6 @@ func (met *Metrics) FetchAndReset(keys ...string) map[string]int64 {
 // consumption and number of go routines. This function is not called
 // automatically.
 func (met *Metrics) UpdateSystemMetrics() {
-	met.storeGuard.RLock()
-	defer met.storeGuard.RUnlock()
-
 	stats := new(runtime.MemStats)
 	runtime.ReadMemStats(stats)
 
@@ -389,49 +384,43 @@ func (met *Metrics) UpdateSystemMetrics() {
 
 func (met *Metrics) updateRate(r *rate) {
 	// Read current values in a snapshot to avoid deadlocks
-	snapshot := make(map[string]int64)
-	met.storeGuard.RLock()
-	for key, value := range met.store {
-		snapshot[key] = atomic.LoadInt64(value)
-	}
-	met.storeGuard.RUnlock()
-
-	met.rateGuard.Lock()
-	defer met.rateGuard.Unlock()
+	sample := atomic.LoadInt64(met.get(r.metric))
+	idx := r.index % uint64(len(r.samples))
+	r.index++
 
 	// Sample metric
-	sample := snapshot[r.metric]
 	if r.relative {
-		r.samples[r.index] = sample - r.lastSample
+		r.samples[idx] = sample - r.lastSample
 		r.lastSample = sample
 	} else {
-		r.samples[r.index] = sample
+		r.samples[idx] = sample
 	}
-	r.index = (r.index + 1) % len(r.samples)
 
-	// cache value
+	numSamples := int64(tmath.MinUint64(idx+1, uint64(len(r.samples))))
+
+	// Build value
 	switch {
 	case r.numMedians == 1:
 		// Mean of all values
 		total := int64(0)
-		for _, v := range r.samples {
-			total += v
+		for _, s := range r.samples[:numSamples] {
+			total += s
 		}
-		r.value = total / int64(len(r.samples))
+		r.value = total / numSamples
 
-	case r.numMedians == 0:
+	case r.numMedians == 0 || numSamples <= int64(r.numMedians):
 		// Median of all values
-		values := make(tcontainer.Int64Slice, len(r.samples))
-		copy(values, r.samples)
+		values := make(tcontainer.Int64Slice, numSamples)
+		copy(values, r.samples[:numSamples])
 		values.Sort()
-		r.value = values[len(r.samples)/2]
+		r.value = values[numSamples/2]
 
 	default:
 		// Median of means
-		blockSize := float32(len(r.samples)) / float32(r.numMedians)
+		blockSize := float32(numSamples) / float32(r.numMedians)
 		blocks := make(tcontainer.Float32Slice, r.numMedians)
 
-		for i, s := range r.samples {
+		for i, s := range r.samples[:numSamples] {
 			blockIdx := int(float32(i) / blockSize)
 			blocks[blockIdx] += float32(s)
 		}
