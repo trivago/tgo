@@ -14,6 +14,53 @@
 
 package tcontainer
 
+// BytePool is a fragmentation friendly way to allocated byte slices.
+type BytePool struct {
+}
+
+const (
+	tiny   = 64
+	small  = 1024
+	medium = 1024 * 10
+	large  = 1024 * 100
+	huge   = 1024 * 1000
+)
+
+// NewBytePool creates a new BytePool
+func NewBytePool() BytePool {
+	return BytePool{}
+}
+
+// Get returns a slice allocated to a normalized size.
+// Sizes are organized in evenly sized buckets so that fragmentation is kept low.
+// Buckets are:
+//  * 0      - 960     bytes (64 byte steps)
+//  * 960    - 10240   bytes (1 kb steps)
+//  * 10240  - 102400  bytes (10 kb steps)
+//  * 102400 - 1024000 bytes (100 kb steps)
+func (b *BytePool) Get(size int) []byte {
+	switch {
+	case size == 0:
+		return []byte{}
+
+	case size <= small-tiny:
+		return make([]byte, size, ((size-1)/tiny+1)*tiny)
+
+	case size <= medium-small:
+		return make([]byte, size, ((size-1)/small+1)*small)
+
+	case size <= large-medium:
+		return make([]byte, size, ((size-1)/medium+1)*medium)
+
+	case size <= huge-large:
+		return make([]byte, size, ((size-1)/large+1)*large)
+
+	default:
+		return make([]byte, size)
+	}
+}
+
+/*
 import (
 	"reflect"
 	"runtime"
@@ -130,7 +177,7 @@ func (s *slabsList) alloc(size int) []byte {
 	ptr := slab.pop()
 
 	header := reflect.SliceHeader{
-		Data: *ptr, // TODO: Finalizer moved over?
+		Data: *ptr, // BROKEN: Finalizer is not moved
 		Len:  size,
 		Cap:  slab.size,
 	}
@@ -176,4 +223,4 @@ func (s *slab) pop() *uintptr {
 			return p
 		}
 	}
-}
+}*/

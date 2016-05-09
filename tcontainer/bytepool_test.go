@@ -16,12 +16,53 @@ package tcontainer
 
 import (
 	"github.com/trivago/tgo/ttesting"
-	"runtime"
+	//"runtime"
 	"testing"
-	"time"
+	//"time"
 )
 
 func TestBytePool(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	pool := NewBytePool()
+
+	tinyMin := pool.Get(1)
+	expect.Equal(tiny, cap(tinyMin))
+	expect.Equal(1, len(tinyMin))
+
+	tinyMax := pool.Get(small - tiny)
+	expect.Equal(small-tiny, cap(tinyMax))
+	expect.Equal(small-tiny, len(tinyMax))
+
+	smallMin := pool.Get(small - tiny + 1)
+	expect.Equal(small, cap(smallMin))
+	expect.Equal(small-tiny+1, len(smallMin))
+
+	smallMax := pool.Get(medium - small)
+	expect.Equal(medium-small, cap(smallMax))
+	expect.Equal(medium-small, len(smallMax))
+
+	mediumMin := pool.Get(medium - small + 1)
+	expect.Equal(medium, cap(mediumMin))
+	expect.Equal(medium-small+1, len(mediumMin))
+
+	mediumMax := pool.Get(large - medium)
+	expect.Equal(large-medium, cap(mediumMax))
+	expect.Equal(large-medium, len(mediumMax))
+
+	largeMin := pool.Get(large - medium + 1)
+	expect.Equal(large, cap(largeMin))
+	expect.Equal(large-medium+1, len(largeMin))
+
+	largeMax := pool.Get(huge - large)
+	expect.Equal(huge-large, cap(largeMax))
+	expect.Equal(huge-large, len(largeMax))
+
+	hugeMin := pool.Get(huge - large + 1)
+	expect.Equal(huge-large+1, cap(hugeMin))
+	expect.Equal(huge-large+1, len(hugeMin))
+}
+
+/*func TestBytePool(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	pool := NewBytePool()
 
@@ -91,4 +132,4 @@ func TestBytePoolRecycle(t *testing.T) {
 	for i := 0; i < 32; i++ {
 		expect.Equal(byte(i), data[i])
 	}
-}
+}*/
