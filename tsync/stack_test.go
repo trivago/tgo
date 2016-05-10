@@ -16,6 +16,7 @@ package tsync
 
 import (
 	"github.com/trivago/tgo/ttesting"
+	"runtime"
 	"sync"
 	"testing"
 )
@@ -59,6 +60,7 @@ func TestStackConcurrency(t *testing.T) {
 
 		for i := 0; i < 10000; i++ {
 			s.Push(i)
+			runtime.Gosched()
 		}
 	}()
 
@@ -79,6 +81,7 @@ func TestStackConcurrency(t *testing.T) {
 				} else {
 					errCount++
 				}
+				runtime.Gosched()
 			}
 
 			expect.Less(errCount, 1000)
