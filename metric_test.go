@@ -121,6 +121,51 @@ func TestRateRelative(t *testing.T) {
 	expect.Equal(int64(3), value)
 }
 
+func TestRateIncomplete(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	mockMetric := getMockMetric()
+	defer mockMetric.Close()
+
+	mockMetric.New("base")
+	err := mockMetric.NewRate("invalid", "mean", time.Hour, 10, 0, false)
+	expect.NotNil(err)
+
+	err = mockMetric.NewRate("base", "median", time.Hour, 10, 0, false)
+	expect.NoError(err)
+	err = mockMetric.NewRate("base", "mean", time.Hour, 10, 1, false)
+	expect.NoError(err)
+	err = mockMetric.NewRate("base", "median3", time.Hour, 10, 3, false)
+	expect.NoError(err)
+
+	for i := 0; i < 5; i++ {
+		if i < 2 {
+			mockMetric.Set("base", 2)
+		} else {
+			mockMetric.Set("base", 4)
+		}
+		for _, r := range mockMetric.rates {
+			mockMetric.updateRate(r)
+		}
+	}
+
+	// values : 2  2  4  4  4  0  0  0  0  0
+	// mean   : 16 / 5 = 3
+	// median : 2  2 [4] 4  4  0  0  0  0  0
+	// med3   :[  2 ][  4 ][2] -> 2 [2] 4
+
+	value, err := mockMetric.Get("mean")
+	expect.NoError(err)
+	expect.Equal(int64(3), value)
+
+	value, err = mockMetric.Get("median")
+	expect.NoError(err)
+	expect.Equal(int64(4), value)
+
+	value, err = mockMetric.Get("median3")
+	expect.NoError(err)
+	expect.Equal(int64(2), value)
+}
+
 func TestMetricsSet(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	mockMetric := getMockMetric()

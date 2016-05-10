@@ -120,6 +120,8 @@ func (met *Metrics) InitSystemMetrics() {
 
 		met.SetI(MetricGoVersion, int(numericVersion[0]*10000+numericVersion[1]*100+numericVersion[2]))
 	}
+
+	met.UpdateSystemMetrics()
 }
 
 // Close stops the internal go routines used for e.g. sampling
@@ -131,11 +133,7 @@ func (met *Metrics) Close() {
 
 // New creates a new metric under the given name with a value of 0
 func (met *Metrics) New(name string) {
-	met.storeGuard.Lock()
-	defer met.storeGuard.Unlock()
-	if _, exists := met.store[name]; !exists {
-		met.store[name] = new(int64)
-	}
+	met.new(name)
 }
 
 // NewRate creates a new rate. Rates are based on another metric and sample
@@ -190,27 +188,6 @@ func (met *Metrics) NewRate(baseMetric string, name string, interval time.Durati
 	return nil
 }
 
-func (met *Metrics) get(name string) *int64 {
-	met.storeGuard.RLock()
-	if v, exists := met.store[name]; exists {
-		met.storeGuard.RUnlock()
-		return v // ### return, exists ###
-	}
-	met.storeGuard.RUnlock()
-
-	// Create new metric
-	met.storeGuard.Lock()
-	defer met.storeGuard.Lock()
-
-	if v, exists := met.store[name]; exists {
-		return v // ### return, created by other thread ###
-	}
-
-	v := new(int64)
-	met.store[name] = v
-	return v
-}
-
 // Set sets a given metric to a given value.
 func (met *Metrics) Set(name string, value int64) {
 	atomic.StoreInt64(met.get(name), value)
@@ -234,7 +211,6 @@ func (met *Metrics) SetB(name string, value bool) {
 	} else {
 		atomic.StoreInt64(met.get(name), int64(0))
 	}
-
 }
 
 // Inc adds 1 to a given metric.
@@ -282,20 +258,15 @@ func (met *Metrics) SubF(name string, value float64) {
 // Get returns the value of a given metric or rate.
 // If the value does not exists error is non-nil and the returned value is 0.
 func (met *Metrics) Get(name string) (int64, error) {
-	met.storeGuard.RLock()
-	if val, exists := met.store[name]; exists {
-		met.storeGuard.RUnlock()
-		return atomic.LoadInt64(val), nil
+	if metric := met.tryGetMetric(name); metric != nil {
+		return atomic.LoadInt64(metric), nil
 	}
-	met.storeGuard.RUnlock()
 
-	met.rateGuard.RLock()
-	if rate, exists := met.rates[name]; exists {
-		met.rateGuard.RUnlock()
-		return int64(rate.value), nil
+	if rate := met.tryGetRate(name); rate != nil {
+		return *rate, nil
 	}
-	met.rateGuard.RUnlock()
 
+	// Neither rate nor metric found
 	return 0, fmt.Errorf("Metric %s not found.", name)
 }
 
@@ -336,6 +307,7 @@ func (met *Metrics) ResetMetrics() {
 	for _, rate := range met.rates {
 		rate.lastSample = 0
 		rate.value = 0
+		rate.index = 0
 		rate.samples.Set(0)
 	}
 	met.rateGuard.Unlock()
@@ -361,6 +333,7 @@ func (met *Metrics) FetchAndReset(keys ...string) map[string]int64 {
 		if rate, exists := met.rates[key]; exists {
 			rate.lastSample = 0
 			rate.value = 0
+			rate.index = 0
 			rate.samples.Set(0)
 		}
 	}
@@ -383,6 +356,9 @@ func (met *Metrics) UpdateSystemMetrics() {
 }
 
 func (met *Metrics) updateRate(r *rate) {
+	met.rateGuard.RLock()
+	defer met.rateGuard.RUnlock()
+
 	// Read current values in a snapshot to avoid deadlocks
 	sample := atomic.LoadInt64(met.get(r.metric))
 	idx := r.index % uint64(len(r.samples))
@@ -428,4 +404,49 @@ func (met *Metrics) updateRate(r *rate) {
 		blocks.Sort()
 		r.value = int64(blocks[r.numMedians/2] / blockSize)
 	}
+}
+
+func (met *Metrics) new(name string) *int64 {
+	var (
+		value  *int64
+		exists bool
+	)
+
+	met.storeGuard.Lock()
+	defer met.storeGuard.Unlock()
+
+	if value, exists = met.store[name]; !exists {
+		value = new(int64)
+		met.store[name] = value
+	}
+
+	return value
+}
+
+func (met *Metrics) get(name string) *int64 {
+	met.storeGuard.RLock()
+	if v, exists := met.store[name]; exists {
+		met.storeGuard.RUnlock()
+		return v // ### return, exists ###
+	}
+	met.storeGuard.RUnlock()
+	return met.new(name)
+}
+
+func (met *Metrics) tryGetMetric(name string) *int64 {
+	met.storeGuard.RLock()
+	defer met.storeGuard.RUnlock()
+	if v, exists := met.store[name]; exists {
+		return v // ### return, exists ###
+	}
+	return nil
+}
+
+func (met *Metrics) tryGetRate(name string) *int64 {
+	met.rateGuard.RLock()
+	defer met.rateGuard.RUnlock()
+	if r, exists := met.rates[name]; exists {
+		return &r.value // ### return, exists ###
+	}
+	return nil
 }
