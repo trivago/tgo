@@ -23,13 +23,31 @@ import (
 // form func() (<type>, error) do exist for all golang base types.
 type ErrorStack struct {
 	errors []error
+	format ErrorStackFormat
 }
+
+type ErrorStackFormat int
+
+const (
+	// ErrorStackFormatNumbered formats like "0: error\n..."
+	ErrorStackFormatNumbered = ErrorStackFormat(iota)
+	// ErrorStackFormatNewline formats like "error\n..."
+	ErrorStackFormatNewline = ErrorStackFormat(iota)
+	// ErrorStackFormatCSV formats like "error, ..."
+	ErrorStackFormatCSV = ErrorStackFormat(iota)
+)
 
 // NewErrorStack creates a new error stack
 func NewErrorStack() ErrorStack {
 	return ErrorStack{
 		errors: []error{},
+		format: ErrorStackFormatNumbered,
 	}
+}
+
+// SetFormat set the format used when Error() is called.
+func (stack *ErrorStack) SetFormat(format ErrorStackFormat) {
+	stack.format = format
 }
 
 // Push adds a new error to the top of the error stack.
@@ -80,9 +98,17 @@ func (stack ErrorStack) Error() string {
 	if len(stack.errors) == 0 {
 		return ""
 	}
+
 	errString := ""
 	for idx, err := range stack.errors {
-		errString = fmt.Sprintf("%s%d: %s\n", errString, idx, err.Error())
+		switch stack.format {
+		case ErrorStackFormatNumbered:
+			errString = fmt.Sprintf("%s%d: %s\n", errString, idx, err.Error())
+		case ErrorStackFormatNewline:
+			errString = fmt.Sprintf("%s%s\n", errString, err.Error())
+		case ErrorStackFormatCSV:
+			errString = fmt.Sprintf("%s%s, ", errString, err.Error())
+		}
 	}
 	return errString
 }
