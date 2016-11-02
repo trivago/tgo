@@ -196,7 +196,7 @@ func (mmap MarshalMap) Int64(key string) (int64, error) {
 
 	intValue, isInt := val.(int64)
 	if !isInt {
-		return 0, fmt.Errorf(`"%s" is expected to be an unsigned integer`, key)
+		return 0, fmt.Errorf(`"%s" is expected to be an integer`, key)
 	}
 	return intValue, nil
 }
@@ -477,6 +477,8 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 		return value, true // ### return, found requested value ###
 	}
 
+	// TODO: Use reflection to get rid of duplicate code
+
 	// Expecting nested type
 	switch value.(type) {
 	case []interface{}:
@@ -504,6 +506,18 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 
 	case map[string]interface{}:
 		mapValue := value.(map[string]interface{})
+		if storedValue, exists := mapValue[key]; exists {
+			return storedValue, true
+		}
+
+		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
+		if storedValue, exists := mapValue[key[:keyEnd]]; exists {
+			remain := key[nextKeyStart:]
+			return mmap.resolvePath(remain, storedValue) // ### return, nested map ###
+		}
+
+	case map[interface{}]interface{}:
+		mapValue := value.(map[interface{}]interface{})
 		if storedValue, exists := mapValue[key]; exists {
 			return storedValue, true
 		}
