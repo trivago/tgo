@@ -251,33 +251,37 @@ func TestMarshalMapConvert(t *testing.T) {
 		"FOO": true,
 		"BAR": "test",
 	}
-	_, err := ConvertToMarshalMap(convert1, nil)
+	result, err := ConvertToMarshalMap(convert1, nil)
 	expect.NoError(err)
+	expect.Equal(2, len(result))
 
 	// Simple StringMap
 	convert2 := map[string]interface{}{
 		"FOO": true,
 		"BAR": "test",
 	}
-	_, err = ConvertToMarshalMap(convert2, nil)
+	result, err = ConvertToMarshalMap(convert2, nil)
 	expect.NoError(err)
+	expect.Equal(2, len(result))
 
 	// Simple, convertible AnyMap
 	convert3 := map[interface{}]interface{}{
 		"FOO": true,
 		"BAR": "test",
 	}
-	_, err = ConvertToMarshalMap(convert3, nil)
+	result, err = ConvertToMarshalMap(convert3, nil)
 	expect.NoError(err)
+	expect.Equal(2, len(result))
 
-	// Simple, non-convertible AnyMap
+	// Strip non-string keys
 	convert4 := map[interface{}]interface{}{
 		"FOO": true,
 		"BAR": "test",
 		0:     true,
 	}
-	_, err = ConvertToMarshalMap(convert4, nil)
-	expect.NotNil(err)
+	result, err = ConvertToMarshalMap(convert4, nil)
+	expect.NoError(err)
+	expect.Equal(2, len(result))
 
 	// Array as root
 	arrayRoot := []interface{}{

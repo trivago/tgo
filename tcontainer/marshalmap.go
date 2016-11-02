@@ -16,6 +16,7 @@ package tcontainer
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -46,91 +47,35 @@ func NewMarshalMap() MarshalMap {
 // traversed. You can pass a formatKey function that will be applied to all
 // string keys that are detected.
 func TryConvertToMarshalMap(value interface{}, formatKey func(string) string) interface{} {
-	switch value.(type) {
+	valueMeta := reflect.ValueOf(value)
+	switch valueMeta.Kind() {
 	default:
-		return value // ### return, not mappable ###
+		return value
 
-	case []interface{}:
-		arrayValue := value.([]interface{})
-		converted := make([]interface{}, len(arrayValue))
-
-		for idx, originalValue := range arrayValue {
-			converted[idx] = TryConvertToMarshalMap(originalValue, formatKey)
+	case reflect.Array, reflect.Slice:
+		arrayLen := valueMeta.Len()
+		converted := make([]interface{}, arrayLen)
+		for i := 0; i < arrayLen; i++ {
+			converted[i] = TryConvertToMarshalMap(valueMeta.Index(i).Interface(), formatKey)
 		}
-		return converted // ### return, converted array ###
+		return converted
 
-	case []MarshalMap:
-		arrayValue := value.([]MarshalMap)
-		converted := make([]MarshalMap, len(arrayValue))
-		for idx, originalValue := range arrayValue {
-			converted[idx] = TryConvertToMarshalMap(originalValue, formatKey).(MarshalMap)
-		}
-		return converted // ### return, converted array ###
-
-	case []map[string]interface{}:
-		arrayValue := value.([]map[string]interface{})
-		converted := make([]MarshalMap, len(arrayValue))
-		for idx, originalValue := range arrayValue {
-			converted[idx] = TryConvertToMarshalMap(originalValue, formatKey).(MarshalMap)
-		}
-		return converted // ### return, converted array ###
-
-	case MarshalMap:
-		mapValue := value.(MarshalMap)
+	case reflect.Map:
 		converted := NewMarshalMap()
+		keys := valueMeta.MapKeys()
 
-		for key, originalValue := range mapValue {
-			if formatKey != nil {
-				key = formatKey(key)
+		for _, keyMeta := range keys {
+			strKey, isString := keyMeta.Interface().(string)
+			if !isString {
+				continue
 			}
-			converted[key] = TryConvertToMarshalMap(originalValue, formatKey)
+			if formatKey != nil {
+				strKey = formatKey(strKey)
+			}
+			val := valueMeta.MapIndex(keyMeta).Interface()
+			converted[strKey] = TryConvertToMarshalMap(val, formatKey)
 		}
 		return converted // ### return, converted MarshalMap ###
-
-	case map[string]interface{}:
-		mapValue := value.(map[string]interface{})
-		converted := NewMarshalMap()
-
-		for key, originalValue := range mapValue {
-			if formatKey != nil {
-				key = formatKey(key)
-			}
-			converted[key] = TryConvertToMarshalMap(originalValue, formatKey)
-		}
-		return converted // ### return, converted string map ###
-
-	case map[interface{}]interface{}:
-		mapValue := value.(map[interface{}]interface{})
-
-		isStringMap := true
-		for key := range mapValue {
-			if _, isString := key.(string); !isString {
-				isStringMap = false
-				break // ### break, non-string map ###
-			}
-		}
-
-		if isStringMap {
-			converted := NewMarshalMap()
-			for key, originalValue := range mapValue {
-				stringKey := key.(string)
-				if formatKey != nil {
-					stringKey = formatKey(stringKey)
-				}
-				converted[stringKey] = TryConvertToMarshalMap(originalValue, formatKey)
-			}
-			return converted // ### return, converted as MarshalMap ###
-		}
-
-		converted := make(map[interface{}]interface{})
-		for key, originalValue := range mapValue {
-			stringKey, isString := key.(string)
-			if isString && formatKey != nil {
-				key = formatKey(stringKey)
-			}
-			converted[key] = TryConvertToMarshalMap(originalValue, formatKey)
-		}
-		return converted // ### return, converted as generic map ###
 	}
 }
 
@@ -307,54 +252,32 @@ func (mmap MarshalMap) StringMap(key string) (map[string]string, error) {
 	}
 
 	switch val.(type) {
-	case map[interface{}]interface{}:
-		result := make(map[string]string)
-		interfaceMap, _ := val.(map[interface{}]interface{})
-
-		for key, value := range interfaceMap {
-			stringKey, isString := key.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string]string. Key is not a string`, key)
-			}
-			stringValue, isString := value.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string]string. Value is not a string`, key)
-			}
-			result[stringKey] = stringValue
-		}
-		return result, nil
-
-	case map[string]interface{}:
-		result := make(map[string]string)
-		interfaceMap, _ := val.(map[string]interface{})
-
-		for key, value := range interfaceMap {
-			stringValue, isString := value.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string]string. Value is not a string`, key)
-			}
-			result[key] = stringValue
-		}
-		return result, nil
-
-	case MarshalMap:
-		result := make(map[string]string)
-		interfaceMap, _ := val.(MarshalMap)
-
-		for key, value := range interfaceMap {
-			stringValue, isString := value.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string]string. Value is not a string`, key)
-			}
-			result[key] = stringValue
-		}
-		return result, nil
-
 	case map[string]string:
 		return val.(map[string]string), nil
 
 	default:
-		return nil, fmt.Errorf(`"%s" is expected to be a map[string]string but is %T`, key, val)
+		valueMeta := reflect.ValueOf(val)
+		if valueMeta.Kind() != reflect.Map {
+			return nil, fmt.Errorf(`"%s" is expected to be a map[string]string but is %T`, key, val)
+		}
+
+		result := make(map[string]string)
+		for _, keyMeta := range valueMeta.MapKeys() {
+			strKey, isString := keyMeta.Interface().(string)
+			if !isString {
+				return nil, fmt.Errorf(`"%s" is expected to be a map[string]string. Key is not a string`, key)
+			}
+
+			value := valueMeta.MapIndex(keyMeta)
+			strValue, isString := value.Interface().(string)
+			if !isString {
+				return nil, fmt.Errorf(`"%s" is expected to be a map[string]string. Value is not a string`, key)
+			}
+
+			result[strKey] = strValue
+		}
+
+		return result, nil
 	}
 }
 
@@ -370,58 +293,32 @@ func (mmap MarshalMap) StringArrayMap(key string) (map[string][]string, error) {
 	}
 
 	switch val.(type) {
-	case map[interface{}][]interface{}:
-		interfaceMap := val.(map[interface{}][]interface{})
-		result := make(map[string][]string)
-
-		for key, value := range interfaceMap {
-			strKey, isString := key.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Key is not a string`, key)
-			}
-			arrayValue, err := castToStringArray(strKey, value)
-			if err != nil {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Value is not a []string`, key)
-			}
-			result[strKey] = arrayValue
-		}
-		return result, nil
-
-	case map[interface{}]interface{}:
-		interfaceMap := val.(map[interface{}]interface{})
-		result := make(map[string][]string)
-
-		for key, value := range interfaceMap {
-			strKey, isString := key.(string)
-			if !isString {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Key is not a string`, key)
-			}
-			arrayValue, err := castToStringArray(strKey, value)
-			if err != nil {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Value is not a []string`, key)
-			}
-			result[strKey] = arrayValue
-		}
-		return result, nil
-
-	case map[string]interface{}:
-		interfaceMap := val.(map[string]interface{})
-		result := make(map[string][]string)
-
-		for key, value := range interfaceMap {
-			arrayValue, err := castToStringArray(key, value)
-			if err != nil {
-				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Value is not a []string`, key)
-			}
-			result[key] = arrayValue
-		}
-		return result, nil
-
 	case map[string][]string:
 		return val.(map[string][]string), nil
 
 	default:
-		return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string`, key)
+		valueMeta := reflect.ValueOf(val)
+		if valueMeta.Kind() != reflect.Map {
+			return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string but is %T`, key, val)
+		}
+
+		result := make(map[string][]string)
+		for _, keyMeta := range valueMeta.MapKeys() {
+			strKey, isString := keyMeta.Interface().(string)
+			if !isString {
+				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Key is not a string`, key)
+			}
+
+			value := valueMeta.MapIndex(keyMeta)
+			arrayValue, err := castToStringArray(strKey, value.Interface())
+			if err != nil {
+				return nil, fmt.Errorf(`"%s" is expected to be a map[string][]string. Value is not a []string`, key)
+			}
+
+			result[strKey] = arrayValue
+		}
+
+		return result, nil
 	}
 }
 
@@ -477,11 +374,9 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 		return value, true // ### return, found requested value ###
 	}
 
-	// TODO: Use reflection to get rid of duplicate code
-
-	// Expecting nested type
-	switch value.(type) {
-	case []interface{}:
+	valueMeta := reflect.ValueOf(value)
+	switch valueMeta.Kind() {
+	case reflect.Array, reflect.Slice:
 		startIdx := strings.IndexRune(key, MarshalMapArrayBegin) // Must be first char, otherwise malformed
 		endIdx := strings.IndexRune(key, MarshalMapArrayEnd)     // Must be > startIdx, otherwise malformed
 
@@ -490,54 +385,32 @@ func (mmap MarshalMap) resolvePath(key string, value interface{}) (interface{}, 
 		}
 
 		if startIdx == 0 && endIdx > startIdx {
-			arrayValue := value.([]interface{})
 			index, err := strconv.Atoi(key[startIdx+1 : endIdx])
 
 			// [1]    -> index: "1", remain: ""    -- value
 			// [1]a/b -> index: "1", remain: "a/b" -- nested map
 			// [1][2] -> index: "1", remain: "[2]" -- nested array
 
-			if err == nil && index < len(arrayValue) {
-				item := arrayValue[index]
+			if err == nil && index < valueMeta.Len() {
+				item := valueMeta.Index(index).Interface()
 				key := key[endIdx+1:]
 				return mmap.resolvePath(key, item) // ### return, nested array ###
 			}
 		}
 
-	case map[string]interface{}:
-		mapValue := value.(map[string]interface{})
-		if storedValue, exists := mapValue[key]; exists {
-			return storedValue, true
+	case reflect.Map:
+		keyMeta := reflect.ValueOf(key)
+		if storedValue := valueMeta.MapIndex(keyMeta); storedValue.IsValid() {
+			return storedValue.Interface(), true
 		}
 
 		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
-		if storedValue, exists := mapValue[key[:keyEnd]]; exists {
+		pathKey := key[:keyEnd]
+		keyMeta = reflect.ValueOf(pathKey)
+
+		if storedValue := valueMeta.MapIndex(keyMeta); storedValue.IsValid() {
 			remain := key[nextKeyStart:]
-			return mmap.resolvePath(remain, storedValue) // ### return, nested map ###
-		}
-
-	case map[interface{}]interface{}:
-		mapValue := value.(map[interface{}]interface{})
-		if storedValue, exists := mapValue[key]; exists {
-			return storedValue, true
-		}
-
-		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
-		if storedValue, exists := mapValue[key[:keyEnd]]; exists {
-			remain := key[nextKeyStart:]
-			return mmap.resolvePath(remain, storedValue) // ### return, nested map ###
-		}
-
-	case MarshalMap:
-		mapValue := value.(MarshalMap)
-		if storedValue, exists := mapValue[key]; exists {
-			return storedValue, true
-		}
-
-		keyEnd, nextKeyStart := mmap.resolvePathKey(key)
-		if storedValue, exists := mapValue[key[:keyEnd]]; exists {
-			remain := key[nextKeyStart:]
-			return mmap.resolvePath(remain, storedValue) // ### return, nested map ###
+			return mmap.resolvePath(remain, storedValue.Interface()) // ### return, nested map ###
 		}
 	}
 
