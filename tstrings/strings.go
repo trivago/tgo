@@ -133,3 +133,20 @@ func IsInt(s string) bool {
 	}
 	return true
 }
+
+// JoinStringers works like strings.Join but takes an array of fmt.Stringer.
+func JoinStringers(a []fmt.Stringer, sep string) string {
+	if len(a) == 0 {
+		return ""
+	}
+	if len(a) == 1 {
+		return a[0].String()
+	}
+
+	str := make([]string, len(a))
+	for i, s := range a {
+		str[i] = s.String()
+	}
+
+	return strings.Join(str, sep)
+}

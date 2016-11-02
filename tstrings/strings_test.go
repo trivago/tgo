@@ -15,6 +15,7 @@
 package tstrings
 
 import (
+	"fmt"
 	"github.com/trivago/tgo/ttesting"
 	"testing"
 )
@@ -118,4 +119,23 @@ func TestIsInt(t *testing.T) {
 	expect.False(IsInt("a123a"))
 	expect.False(IsInt("1.23"))
 	expect.False(IsInt("a123a"))
+}
+
+type testStringer string
+
+func (s testStringer) String() string {
+	return string(s)
+}
+
+func TestJoinStringers(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	v := testStringer("Hello")
+	arr1 := []fmt.Stringer{}
+	arr2 := []fmt.Stringer{v}
+	arr3 := []fmt.Stringer{v, v, v, v}
+
+	expect.Equal("", JoinStringers(arr1, ","))
+	expect.Equal("Hello", JoinStringers(arr2, ","))
+	expect.Equal("Hello,Hello,Hello,Hello", JoinStringers(arr3, ","))
 }
