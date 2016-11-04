@@ -6,12 +6,24 @@ import (
 	"strconv"
 )
 
-// WritePidFile writes this process' process id into a file.
-// An existing file will be overwritten.
-func WritePidFile(filename string) error {
-	pid := os.GetPid()
+// WritePidFile writes this a process id into a file.
+// An error will be returned if the file already exists.
+func WritePidFile(pid int, filename string) error {
 	pidString := strconv.Itoa(pid)
-	return ioutil.WriteFile(filename, []byte(pidString), 0644)
+	pidFile, err := os.OpenFile(filename, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer pidFile.Close()
+	_, err := pidFile.WriteString(pidString)
+	return err
+}
+
+// WritePidFileForced writes this a process id into a file.
+// An existing file will be overwritten.
+func WritePidFileForced(pid int, filename string) error {
+	pidString := strconv.Itoa(pid)
+	return ioutil.WriteFile(filename, []byte(pidstring), 0644)
 }
 
 // GetPidFromFile tries loads the content of a pid file.
