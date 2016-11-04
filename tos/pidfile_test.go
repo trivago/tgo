@@ -17,10 +17,7 @@ package tos
 import (
 	"github.com/trivago/tgo/ttesting"
 	"os"
-	"os/signal"
-	"syscall"
 	"testing"
-	"time"
 )
 
 func TestPidfile(t *testing.T) {
