@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"syscall"
+	"time"
 )
 
 const (
@@ -55,13 +57,47 @@ func GetPidFromFile(filename string) (int, error) {
 // the pid contained in the given pid file.
 func GetProcFromFile(filename string) (*os.Process, error) {
 	var (
-		pid int
-		err error
+		pid  int
+		err  error
+		proc *os.Process
 	)
 
 	if pid, err = GetPidFromFile(filename); err != nil {
 		return nil, err
 	}
 
-	return os.FindProcess(pid)
+	// FindProcess always returns a proc on unix
+	if proc, err = os.FindProcess(pid); err != nil {
+		return nil, err
+	}
+
+	// Try to signal the process to check if it is running
+	if err = proc.Signal(syscall.Signal(0)); err != nil {
+		return nil, err
+	}
+
+	return proc, nil
+}
+
+// Terminate tries to gracefully shutdown a process by sending SIGTERM.
+// If the process does not shut down after (at least) gracePeriod a SIGKILL will be sent.
+// 10 checks will be done during gracePeriod to check if the process is still
+// alive.
+func Terminate(proc *os.Process, gracePeriod time.Duration) error {
+	err := proc.Signal(syscall.SIGTERM)
+	if err != nil {
+		return err
+	}
+
+	// Try to gracefully shutdown the process by sending TERMINATE
+	// first. After 5 seconds KILL will be sent.
+	stepDuration := gracePeriod / 10
+	for i := 0; i < 10; i++ {
+		time.Sleep(stepDuration)
+		if err := proc.Signal(syscall.Signal(0)); err != nil {
+			return nil // ### return, success ###
+		}
+	}
+
+	return proc.Kill()
 }
