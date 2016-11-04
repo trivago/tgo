@@ -1,9 +1,14 @@
-package tgo
+package tos
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strconv"
+)
+
+const (
+	InvalidPID = -1
 )
 
 // WritePidFile writes this a process id into a file.
@@ -15,7 +20,7 @@ func WritePidFile(pid int, filename string) error {
 		return err
 	}
 	defer pidFile.Close()
-	_, err := pidFile.WriteString(pidString)
+	_, err = pidFile.WriteString(pidString)
 	return err
 }
 
@@ -23,7 +28,7 @@ func WritePidFile(pid int, filename string) error {
 // An existing file will be overwritten.
 func WritePidFileForced(pid int, filename string) error {
 	pidString := strconv.Itoa(pid)
-	return ioutil.WriteFile(filename, []byte(pidstring), 0644)
+	return ioutil.WriteFile(filename, []byte(pidString), 0644)
 }
 
 // GetPidFromFile tries loads the content of a pid file.
@@ -50,12 +55,11 @@ func GetPidFromFile(filename string) (int, error) {
 // the pid contained in the given pid file.
 func GetProcFromFile(filename string) (*os.Process, error) {
 	var (
-		pid  int
-		proc *os.Process
-		err  error
+		pid int
+		err error
 	)
 
-	if pid, err = getPid(app, ver); err != nil {
+	if pid, err = GetPidFromFile(filename); err != nil {
 		return nil, err
 	}
 
