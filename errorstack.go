@@ -118,6 +118,11 @@ func (stack ErrorStack) Errors() []error {
 	return stack.errors
 }
 
+// Len returns the number of error on the stack
+func (stack ErrorStack) Len() int {
+	return len(stack.errors)
+}
+
 // OrNil returns this object or nil of no errors are stored
 func (stack *ErrorStack) OrNil() error {
 	if len(stack.errors) == 0 {
