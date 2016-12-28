@@ -48,7 +48,7 @@ func TestQueueFunctionality(t *testing.T) {
 
 func TestQueueConcurrency(t *testing.T) {
 	expect := ttesting.NewExpect(t)
-	q := NewQueueWithSpinner(100, NewCustomSpinner(10, time.Millisecond))
+	q := NewQueueWithSpinner(100, NewCustomSpinner(time.Millisecond))
 
 	writer := WaitGroup{}
 	reader := WaitGroup{}
