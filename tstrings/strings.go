@@ -138,11 +138,11 @@ func IsInt(s string) bool {
 }
 
 // IsJSON returns true if the given byte slice contains valid JSON data.
-// You can access the results by utiliuing the RawMessage returned.
-func IsJSON(data []byte) (bool, json.RawMessage) {
-	delayedResult := json.RawMessage{}
+// You can access the results by utilizing the RawMessage returned.
+func IsJSON(data []byte) (bool, error, *json.RawMessage) {
+	delayedResult := new(json.RawMessage)
 	err := json.Unmarshal(data, delayedResult)
-	return err == nil, delayedResult
+	return err == nil, err, delayedResult
 
 }
 
