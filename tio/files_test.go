@@ -115,3 +115,9 @@ func TestFilesByDate(t *testing.T) {
 	expect.Equal("log1", testData[3].Name())
 	expect.Equal("log4", testData[4].Name())
 }
+
+func TestFileExists(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	expect.True(FileExists("."))
+	expect.False(FileExists("__foo.bar"))
+}
