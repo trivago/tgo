@@ -53,6 +53,11 @@ func createTosTestStructure(folder string, expect ttesting.Expect) {
 	_, err = file.WriteString("test3")
 	expect.NoError(err)
 	expect.NoError(file.Close())
+
+	err = os.Symlink("1.test", baseFolder+"/test1/alias")
+	if !os.IsExist(err) {
+		expect.NoError(err)
+	}
 }
 
 func TestCopy(t *testing.T) {
@@ -88,19 +93,25 @@ func TestCopy(t *testing.T) {
 	expect.Equal("test3", string(content))
 	expect.NoError(file.Close())
 
+	link, err := os.Readlink("/tmp/tgo_tos/copy_target/test1/alias")
+	expect.NoError(err)
+	expect.Equal("1.test", link)
+
 	expect.NoError(Remove("/tmp/tgo_tos"))
 }
 
 func TestChmod(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	createTosTestStructure("chmod", expect)
-
 	setMode := os.FileMode(0777)
 
 	expect.NoError(Chmod("/tmp/tgo_tos/chmod", setMode))
 
 	filepath.Walk("/tmp/tgo_tos/chmod", func(path string, info os.FileInfo, err error) error {
-		expect.Equal(setMode, info.Mode()&0777)
+		// TODO: os.Chmod fails on symlinks
+		if info.Mode()&os.ModeSymlink == 0 {
+			expect.Equal(setMode, info.Mode()&0777)
+		}
 		return err
 	})
 

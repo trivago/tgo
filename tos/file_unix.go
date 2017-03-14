@@ -26,7 +26,7 @@ import (
 // GetFileCredentials returns the user and group id of a given path.
 // This function is not supported on windows platforms.
 func GetFileCredentialsId(name string) (uid int, gid int, err error) {
-	stat, err := os.Stat(name)
+	stat, err := os.Lstat(name)
 	if err != nil {
 		return 0, 0, err
 	}

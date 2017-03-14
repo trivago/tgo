@@ -44,7 +44,7 @@ func Chown(filePath, usr, grp string) error {
 // ChownId is a wrapper around os.Chown that allows changing user and group
 // recursively if given a directory.
 func ChownId(filePath string, uid, gid int) error {
-	stat, err := os.Stat(filePath)
+	stat, err := os.Lstat(filePath)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func ChownId(filePath string, uid, gid int) error {
 // Chmod is a wrapper around os.Chmod that allows changing rights recursively
 // if a directory is given.
 func Chmod(filePath string, mode os.FileMode) error {
-	stat, err := os.Stat(filePath)
+	stat, err := os.Lstat(filePath)
 	if err != nil {
 		return err
 	}
@@ -84,6 +84,11 @@ func Chmod(filePath string, mode os.FileMode) error {
 		}
 	}
 
+	if stat.Mode()&os.ModeSymlink != 0 {
+		// TODO: os.Chmod fails on symlinks
+		return nil
+	}
+
 	return os.Chmod(filePath, mode)
 }
 
@@ -94,7 +99,7 @@ func Chmod(filePath string, mode os.FileMode) error {
 // Copy returns upon the first error encountered. In-between results will not
 // be rolled back.
 func Copy(dest, source string) error {
-	srcStat, err := os.Stat(source)
+	srcStat, err := os.Lstat(source)
 	if err != nil {
 		return err
 	}
@@ -114,7 +119,16 @@ func Copy(dest, source string) error {
 				return err
 			}
 		}
-		return nil
+		return nil // ### return, copy done ###
+	}
+
+	// Symlink handling
+	if srcStat.Mode()&os.ModeSymlink != 0 {
+		target, err := os.Readlink(source)
+		if err != nil {
+			return err
+		}
+		return os.Symlink(target, dest) // ### return, copy done ###
 	}
 
 	srcFile, err := os.Open(source)
@@ -139,7 +153,7 @@ func Copy(dest, source string) error {
 // Remove is a wrapper around os.Remove and allows to recursively remove
 // directories and files.
 func Remove(name string) error {
-	stat, err := os.Stat(name)
+	stat, err := os.Lstat(name)
 	if err != nil {
 		return err
 	}
