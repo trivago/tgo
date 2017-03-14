@@ -121,3 +121,31 @@ func TestFileExists(t *testing.T) {
 	expect.True(FileExists("."))
 	expect.False(FileExists("__foo.bar"))
 }
+
+func TestCommonPath(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	common := CommonPath("a", "a")
+	expect.Equal("a", common)
+
+	common = CommonPath("a", "b")
+	expect.Equal("", common)
+
+	common = CommonPath("a", "ab")
+	expect.Equal("", common)
+
+	common = CommonPath("a/b", "a")
+	expect.Equal("a", common)
+
+	common = CommonPath("b/a", "a")
+	expect.Equal("", common)
+
+	common = CommonPath("a/b", "a/b")
+	expect.Equal("a/b", common)
+
+	common = CommonPath("a/b", "a/bc")
+	expect.Equal("a", common)
+
+	common = CommonPath("a/b/c", "a/b/d")
+	expect.Equal("a/b", common)
+}

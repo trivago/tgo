@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 // FilesByDate implements the Sort interface by Date for os.FileInfo arrays
@@ -100,4 +101,23 @@ func IsDirectory(filePath string) bool {
 		return false
 	}
 	return stat.IsDir()
+}
+
+// CommonPath returns the longest common path of both paths given.
+func CommonPath(path1, path2 string) string {
+	parts1 := strings.Split(path1, "/")
+	parts2 := strings.Split(path2, "/")
+	maxIdx := len(parts1)
+	if len(parts2) < maxIdx {
+		maxIdx = len(parts2)
+	}
+
+	common := make([]string, 0, maxIdx)
+	for i := 0; i < maxIdx; i++ {
+		if parts1[i] == parts2[i] {
+			common = append(common, parts1[i])
+		}
+	}
+
+	return strings.Join(common, "/")
 }
