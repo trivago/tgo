@@ -92,3 +92,12 @@ func FileExists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return !os.IsNotExist(err)
 }
+
+// IsDirectory returns true if a given path points to a directory.
+func IsDirectory(filePath string) bool {
+	stat, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+	return stat.IsDir()
+}
