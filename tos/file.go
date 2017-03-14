@@ -61,6 +61,11 @@ func ChownId(filePath string, uid, gid int) error {
 		}
 	}
 
+	if stat.Mode()&os.ModeSymlink != 0 {
+		// TODO: os.Chown fails on symlinks
+		return nil
+	}
+
 	return os.Chown(filePath, uid, gid)
 }
 
