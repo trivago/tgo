@@ -25,3 +25,9 @@ import (
 func GetFileCredentials(name string) (uid int, gid int, err error) {
 	return 0, 0, fmt.Errorf("Not supported on windows")
 }
+
+// GetFileCredentialsByName returns the user and group name of a given path.
+// This function is not supported on windows platforms.
+func GetFileCredentialsByName(name string) (usr string, grp string, err error) {
+	return "", "", fmt.Errorf("Not supported on windows")
+}

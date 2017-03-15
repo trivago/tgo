@@ -18,6 +18,8 @@ package tos
 
 import (
 	"os"
+	"os/user"
+	"strconv"
 	"syscall"
 )
 
@@ -31,4 +33,25 @@ func GetFileCredentials(name string) (uid int, gid int, err error) {
 
 	nativeStat := stat.Sys().(*syscall.Stat_t)
 	return int(nativeStat.Uid), int(nativeStat.Gid), nil
+}
+
+// GetFileCredentialsByName returns the user and group name of a given path.
+// This function is not supported on windows platforms.
+func GetFileCredentialsByName(name string) (usr string, grp string, err error) {
+	uid, gid, err := GetFileCredentials(name)
+	if err != nil {
+		return "", "", err
+	}
+
+	usrData, err := user.LookupId(strconv.Itoa(uid))
+	if err != nil {
+		return "", "", err
+	}
+
+	grpData, err := user.LookupGroupId(strconv.Itoa(gid))
+	if err != nil {
+		return "", "", err
+	}
+
+	return usrData.Username, grpData.Name, nil
 }
