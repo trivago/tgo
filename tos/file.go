@@ -18,32 +18,11 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/user"
-	"strconv"
 )
-
-// Chown is a wrapper around ChownId that allows changing user and group by name.
-func Chown(filePath, usr, grp string) error {
-	var uid, gid int
-
-	if userInfo, err := user.Lookup(usr); err != nil {
-		return err
-	} else if uid, err = strconv.Atoi(userInfo.Uid); err != nil {
-		return err
-	}
-
-	if groupInfo, err := user.LookupGroup(grp); err != nil {
-		return err
-	} else if gid, err = strconv.Atoi(groupInfo.Gid); err != nil {
-		return err
-	}
-
-	return ChownId(filePath, uid, gid)
-}
 
 // ChownId is a wrapper around os.Chown that allows changing user and group
 // recursively if given a directory.
-func ChownId(filePath string, uid, gid int) error {
+func Chown(filePath string, uid, gid int) error {
 	stat, err := os.Lstat(filePath)
 	if err != nil {
 		return err
@@ -55,7 +34,7 @@ func ChownId(filePath string, uid, gid int) error {
 			return err
 		}
 		for _, file := range files {
-			if err := ChownId(filePath+"/"+file.Name(), uid, gid); err != nil {
+			if err := Chown(filePath+"/"+file.Name(), uid, gid); err != nil {
 				return err
 			}
 		}

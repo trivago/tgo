@@ -129,7 +129,7 @@ func TestChown(t *testing.T) {
 
 	createTosTestStructure("chown", expect)
 
-	expect.NoError(Chown("/tmp/tgo_tos/chown", "nobody", "nobody"))
+	expect.NoError(Chown("/tmp/tgo_tos/chown", NobodyUid, NobodyGid))
 
 	filepath.Walk("/tmp/tgo_tos/chown", func(path string, info os.FileInfo, err error) error {
 		// TODO: os.Chmod fails on symlinks

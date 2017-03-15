@@ -12,23 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build !windows
+// +build darwin
 
 package tos
 
-import (
-	"os"
-	"syscall"
+const (
+	// NobodyUid represents the user id of the user nobody
+	NobodyUid = 0xFFFFFFFE
+	// NobodyUid represents the group id of the group nobody
+	NobodyGid = 0xFFFFFFFE
+	// RootUid represents the user id of the root user
+	RootUid = 0
+	// RootUid represents the group id of the root group
+	RootGid = 0
 )
-
-// GetFileCredentials returns the user and group id of a given path.
-// This function is not supported on windows platforms.
-func GetFileCredentials(name string) (uid int, gid int, err error) {
-	stat, err := os.Lstat(name)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	nativeStat := stat.Sys().(*syscall.Stat_t)
-	return int(nativeStat.Uid), int(nativeStat.Gid), nil
-}
