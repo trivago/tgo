@@ -25,7 +25,7 @@ import (
 )
 
 func createTosTestStructure(folder string, expect ttesting.Expect) {
-	err := Remove("/tmp/tgo_tos")
+	err := os.RemoveAll("/tmp/tgo_tos")
 	if !os.IsNotExist(err) {
 		expect.NoError(err)
 	}
@@ -97,7 +97,7 @@ func TestCopy(t *testing.T) {
 	expect.NoError(err)
 	expect.Equal("1.test", link)
 
-	expect.NoError(Remove("/tmp/tgo_tos"))
+	expect.NoError(os.RemoveAll("/tmp/tgo_tos"))
 }
 
 func TestChmod(t *testing.T) {
@@ -115,7 +115,7 @@ func TestChmod(t *testing.T) {
 		return err
 	})
 
-	expect.NoError(Remove("/tmp/tgo_tos"))
+	expect.NoError(os.RemoveAll("/tmp/tgo_tos"))
 }
 
 func TestChown(t *testing.T) {
@@ -142,5 +142,5 @@ func TestChown(t *testing.T) {
 		return err
 	})
 
-	expect.NoError(Remove("/tmp/tgo_tos"))
+	expect.NoError(os.RemoveAll("/tmp/tgo_tos"))
 }

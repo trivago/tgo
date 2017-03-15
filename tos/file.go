@@ -163,27 +163,3 @@ func Copy(dest, source string) error {
 
 	return os.Chmod(dest, srcStat.Mode())
 }
-
-// Remove is a wrapper around os.Remove and allows to recursively remove
-// directories and files.
-func Remove(name string) error {
-	stat, err := os.Lstat(name)
-	if err != nil {
-		return err
-	}
-
-	if stat.IsDir() {
-		files, err := ioutil.ReadDir(name)
-		if err != nil {
-			return err
-		}
-
-		for _, file := range files {
-			if err := Remove(name + "/" + file.Name()); err != nil {
-				return err
-			}
-		}
-	}
-
-	return os.Remove(name)
-}
