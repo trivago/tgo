@@ -15,6 +15,7 @@
 package tio
 
 import (
+	"hash/crc32"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -120,4 +121,13 @@ func CommonPath(path1, path2 string) string {
 	}
 
 	return strings.Join(common, "/")
+}
+
+// FileCRC32 returns the checksum of a given file
+func FileCRC32(path string) (uint32, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+	return crc32.ChecksumIEEE(data), nil
 }
