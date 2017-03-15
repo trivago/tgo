@@ -90,7 +90,7 @@ func SplitPath(filePath string) (dir string, base string, ext string) {
 
 // FileExists does a proper check on wether a file exists or not.
 func FileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
+	_, err := os.Lstat(filePath)
 	return !os.IsNotExist(err)
 }
 
