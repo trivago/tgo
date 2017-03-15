@@ -82,6 +82,20 @@ func Chmod(filePath string, mode os.FileMode) error {
 				return err
 			}
 		}
+
+		// Set executable rights for folders if read or write is allowed
+		execRights := 0
+		if mode&0600 != 0 {
+			execRights |= 0100
+		}
+		if mode&0060 != 0 {
+			execRights |= 0010
+		}
+		if mode&0006 != 0 {
+			execRights |= 0001
+		}
+
+		return os.Chmod(filePath, mode|os.FileMode(execRights))
 	}
 
 	if stat.Mode()&os.ModeSymlink != 0 {
