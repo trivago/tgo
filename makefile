@@ -5,23 +5,23 @@ clean:
     
 linux:
 	@echo "Building for Linux"
-	@GOOS=linux GOARCH=amd64 $(BUILD_FLAGS) go build
+	@GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(BUILD_FLAGS) go build
 
 mac:
 	@echo "Building for MacOS X"
-	@GOOS=darwin GOARCH=amd64 $(BUILD_FLAGS) go build
+	@GOOS=darwin GOARCH=amd64 CGO_ENABLED=1 $(BUILD_FLAGS) go build
 
 freebsd:
 	@echo "Building for FreeBSD"
-	@GOOS=freebsd GOARCH=amd64 $(BUILD_FLAGS) go build
+	@GOOS=freebsd GOARCH=amd64 CGO_ENABLED=1 $(BUILD_FLAGS) go build
 
 win:
 	@echo "Building for Windows"
-	@GOOS=windows GOARCH=amd64 $(BUILD_FLAGS) go build
+	@GOOS=windows GOARCH=amd64 CGO_ENABLED=1 $(BUILD_FLAGS) go build
 
 pi:
 	@echo "Building for Raspberry Pi"
-	@GOOS=linux GOARCH=arm $(BUILD_FLAGS) go build
+	@GOOS=linux GOARCH=arm GOARM=6 CGO_ENABLED=1 $(BUILD_FLAGS) go build
 
 current:
 	@$(BUILD_FLAGS) go build

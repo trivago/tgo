@@ -18,23 +18,18 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/user"
-	"strconv"
 )
 
 // ChownByName is a wrapper around ChownId that allows changing user and group by name.
 func ChownByName(filePath, usr, grp string) error {
 	var uid, gid int
+	var err error
 
-	if userInfo, err := user.Lookup(usr); err != nil {
-		return err
-	} else if uid, err = strconv.Atoi(userInfo.Uid); err != nil {
+	if uid, err = GetUid(usr); err != nil {
 		return err
 	}
 
-	if groupInfo, err := user.LookupGroup(grp); err != nil {
-		return err
-	} else if gid, err = strconv.Atoi(groupInfo.Gid); err != nil {
+	if gid, err = GetGid(grp); err != nil {
 		return err
 	}
 

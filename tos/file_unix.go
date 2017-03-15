@@ -35,9 +35,9 @@ func GetFileCredentials(name string) (uid int, gid int, err error) {
 	return int(nativeStat.Uid), int(nativeStat.Gid), nil
 }
 
-// GetFileCredentialsByName returns the user and group name of a given path.
+// GetFileCredentialsName returns the user and group name of a given path.
 // This function is not supported on windows platforms.
-func GetFileCredentialsByName(name string) (usr string, grp string, err error) {
+func GetFileCredentialsName(name string) (usr string, grp string, err error) {
 	uid, gid, err := GetFileCredentials(name)
 	if err != nil {
 		return "", "", err

@@ -134,7 +134,7 @@ func TestChown(t *testing.T) {
 	filepath.Walk("/tmp/tgo_tos/chown", func(path string, info os.FileInfo, err error) error {
 		// TODO: os.Chmod fails on symlinks
 		if info.Mode()&os.ModeSymlink == 0 {
-			usr, grp, err := GetFileCredentials(path)
+			usr, grp, err := GetFileCredentialsName(path)
 			expect.NoError(err)
 			expect.Equal("nobody", usr)
 			expect.Equal("nobody", grp)
