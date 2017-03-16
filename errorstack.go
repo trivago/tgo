@@ -109,9 +109,9 @@ func (stack ErrorStack) Error() string {
 			errString = fmt.Sprintf("%s%s\n", errString, err.Error())
 		case ErrorStackFormatCSV:
 			if idx == len(stack.errors)-1 {
-				errString = fmt.Sprintf("%s%s, ", errString, err.Error())
-			} else {
 				errString = fmt.Sprintf("%s%s", errString, err.Error())
+			} else {
+				errString = fmt.Sprintf("%s%s, ", errString, err.Error())
 			}
 		}
 	}
