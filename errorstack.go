@@ -99,6 +99,7 @@ func (stack ErrorStack) Error() string {
 		return ""
 	}
 
+	// TODO: Formatter via dependency injection
 	errString := ""
 	for idx, err := range stack.errors {
 		switch stack.format {

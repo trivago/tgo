@@ -18,6 +18,8 @@ import (
 	"sync/atomic"
 )
 
+// TODO: BROKEN! Needs rewrite
+
 // Stack implements a simple, growing, lockfree stack.
 type Stack struct {
 	data   []interface{}
