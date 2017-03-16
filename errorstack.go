@@ -107,7 +107,11 @@ func (stack ErrorStack) Error() string {
 		case ErrorStackFormatNewline:
 			errString = fmt.Sprintf("%s%s\n", errString, err.Error())
 		case ErrorStackFormatCSV:
-			errString = fmt.Sprintf("%s%s, ", errString, err.Error())
+			if idx == len(stack.errors)-1 {
+				errString = fmt.Sprintf("%s%s, ", errString, err.Error())
+			} else {
+				errString = fmt.Sprintf("%s%s", errString, err.Error())
+			}
 		}
 	}
 	return errString
