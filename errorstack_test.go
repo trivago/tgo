@@ -15,6 +15,7 @@
 package tgo
 
 import (
+	"fmt"
 	"github.com/trivago/tgo/ttesting"
 	"testing"
 )
@@ -62,4 +63,25 @@ func TestPop(t *testing.T) {
 	err2 := stack.Pop()
 	expect.Equal(err2, err)
 	expect.Equal(len(stack.Errors()), 0)
+}
+
+func TestFormat(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	stack := NewErrorStack()
+
+	stack.Push(fmt.Errorf("first"))
+	stack.Push(fmt.Errorf("second"))
+	stack.Push(fmt.Errorf("third"))
+
+	stack.SetFormat(ErrorStackFormatNumbered)
+	errorString := stack.Error()
+	expect.Equal("1: first\n2: second\n3: third", errorString)
+
+	stack.SetFormat(ErrorStackFormatNewline)
+	errorString = stack.Error()
+	expect.Equal("first\nsecond\nthird", errorString)
+
+	stack.SetFormat(ErrorStackFormatCSV)
+	errorString = stack.Error()
+	expect.Equal("first, second, third", errorString)
 }
