@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build cgo,go1.7,!windows,!android
+// +build cgo,go1.7
 
 package tos
 
