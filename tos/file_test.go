@@ -19,7 +19,6 @@ import (
 	"github.com/trivago/tgo/ttesting"
 	"io"
 	"os"
-	"os/user"
 	"path/filepath"
 	"testing"
 )
@@ -118,6 +117,8 @@ func TestChmod(t *testing.T) {
 	expect.NoError(os.RemoveAll("/tmp/tgo_tos"))
 }
 
+// Removed as not available on all platforms, requires root, etc.
+/*
 func TestChown(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	currentUser, err := user.Current()
@@ -144,3 +145,4 @@ func TestChown(t *testing.T) {
 
 	expect.NoError(os.RemoveAll("/tmp/tgo_tos"))
 }
+*/
