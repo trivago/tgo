@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build windows android !go1.7 !cgo
+// +build !go1.7 !cgo windows android
 
 package tos
 
