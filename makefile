@@ -1,5 +1,10 @@
-.PHONY: all clean freebsd linux mac pi win aws current vendor test
+.PHONY: all clean freebsd linux mac pi win current vendor test
+.DEFAULT_GOAL := current
+
 BUILD_FLAGS=GO15VENDOREXPERIMENT=1 GORACE="halt_on_error=0" CGO_ENABLED=1
+
+all: clean vendor test freebsd linux mac pi win current
+
 clean:
 	@go clean
     
@@ -27,12 +32,8 @@ current:
 	@$(BUILD_FLAGS) go build
 
 vendor:
-	@go get -u github.com/FiloSottile/gvt
-	@gvt update -all -precaire
+	@go get -u github.com/Masterminds/glide
+	@glide update
 
 test:
 	@$(BUILD_FLAGS) go test -cover -v -timeout 10s -race $$(go list ./...|grep -v vendor)
-
-all: clean freebsd linux mac pi win current
-
-.DEFAULT_GOAL := current
