@@ -1,3 +1,2 @@
 package: github.com/trivago/tgo
-import:
-- package: github.com/mgutz/ansi
+import: []
