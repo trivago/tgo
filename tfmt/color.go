@@ -1,6 +1,7 @@
 package tfmt
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -9,8 +10,10 @@ import (
 type Color int
 
 const (
-	// NoColor use the default color
-	NoColor = Color(0)
+	// ResetColors resets foreground and background color
+	ResetColors = Color(0)
+	// NoColor is used to not change the current color
+	NoColor = Color(-1)
 	// Black color
 	Black = Color(30)
 	// Red color
@@ -45,8 +48,22 @@ const (
 	White = Color(-37)
 )
 
+// Colorize returns a colored string with the given colors.
+func Colorize(c Color, b BackgroundColor, text string) string {
+	return fmt.Sprintf("%s%s%s%s", ResetColors, c, b, text)
+}
+
+// Colorizef returns a colored, formatted string with the given colors.
+func Colorizef(c Color, b BackgroundColor, format string, args ...interface{}) string {
+	return fmt.Sprintf("%s%s%s"+format, ResetColors, c, b, args)
+}
+
 // String implements the stringer interface for color
 func (c Color) String() string {
+	if c == NoColor {
+		return ""
+	}
+
 	if int(c) < 0 {
 		return "\x1b[1m\x1b[" + strconv.Itoa(int(c)) + "m\x1b[22m"
 	}

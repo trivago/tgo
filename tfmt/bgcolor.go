@@ -10,6 +10,8 @@ import (
 type BackgroundColor int
 
 const (
+	// NoBackground is used to not change the current background color
+	NoBackground = BackgroundColor(0)
 	// BlackBackground color
 	BlackBackground = BackgroundColor(40)
 	// RedBackground color
@@ -30,5 +32,8 @@ const (
 
 // String implements the stringer interface for color
 func (c BackgroundColor) String() string {
+	if c == NoBackground {
+		return ""
+	}
 	return "\x1b[" + strconv.Itoa(int(c)) + "m"
 }
