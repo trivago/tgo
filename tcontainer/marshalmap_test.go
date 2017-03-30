@@ -17,6 +17,7 @@ package tcontainer
 import (
 	"github.com/trivago/tgo/ttesting"
 	"testing"
+	"time"
 )
 
 func TestMarshalMapBaseTypes(t *testing.T) {
@@ -42,6 +43,21 @@ func TestMarshalMapBaseTypes(t *testing.T) {
 	t4, err := testMap.String("t4")
 	expect.NoError(err)
 	expect.Equal(t4, "test")
+
+	testMap["t5"] = "1s"
+	t5, err := testMap.Duration("t5")
+	expect.NoError(err)
+	expect.Equal(t5, time.Second)
+
+	testMap["t6"] = "1m"
+	t6, err := testMap.Duration("t6")
+	expect.NoError(err)
+	expect.Equal(t6, time.Minute)
+
+	testMap["t7"] = time.Hour
+	t7, err := testMap.Duration("t7")
+	expect.NoError(err)
+	expect.Equal(t7, time.Hour)
 }
 
 func TestMarshalMapArrays(t *testing.T) {
