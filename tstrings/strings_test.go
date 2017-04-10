@@ -139,3 +139,27 @@ func TestJoinStringers(t *testing.T) {
 	expect.Equal("Hello", JoinStringers(arr2, ","))
 	expect.Equal("Hello,Hello,Hello,Hello", JoinStringers(arr3, ","))
 }
+
+func TestTrimToNumber(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	test := "abc-10"
+	result := TrimToNumber(test)
+	expect.Equal("-10", result)
+
+	test = "abc10"
+	result = TrimToNumber(test)
+	expect.Equal("10", result)
+
+	test = "10def"
+	result = TrimToNumber(test)
+	expect.Equal("10", result)
+
+	test = "abc-10def"
+	result = TrimToNumber(test)
+	expect.Equal("-10", result)
+
+	test = "abc10def"
+	result = TrimToNumber(test)
+	expect.Equal("10", result)
+}
