@@ -65,7 +65,7 @@ func (c Color) String() string {
 	}
 
 	if int(c) < 0 {
-		return "\x1b[1m\x1b[" + strconv.Itoa(int(c)) + "m\x1b[22m"
+		return "\x1b[1m\x1b[" + strconv.Itoa(int(-c)) + "m\x1b[22m"
 	}
 	return "\x1b[" + strconv.Itoa(int(c)) + "m"
 }
