@@ -108,11 +108,68 @@ func TestIndexN(t *testing.T) {
 	expect.Equal(1, LastIndexN(testString, ".", 3))
 }
 
-func TestIsInt(t *testing.T) {
+func TestIsIntCorrectPos(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 
+	expect.True(IsInt("0"))
+	expect.True(IsInt("1"))
+	expect.True(IsInt("2"))
+	expect.True(IsInt("7"))
+	expect.True(IsInt("8"))
+	expect.True(IsInt("9"))
+
+	expect.True(IsInt("000"))
+	expect.True(IsInt("999"))
+
 	expect.True(IsInt("123"))
+
+	expect.True(IsInt("0123"))
+	expect.True(IsInt("1023"))
+	expect.True(IsInt("1203"))
+	expect.True(IsInt("1230"))
+
+	expect.True(IsInt("9123"))
+	expect.True(IsInt("1923"))
+	expect.True(IsInt("1293"))
+	expect.True(IsInt("1239"))
+
+	expect.True(IsInt("01239"))
+	expect.True(IsInt("91230"))
+
+}
+
+func TestIsIntCorrectNeg(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	expect.True(IsInt("-0"))
+	expect.True(IsInt("-1"))
+	expect.True(IsInt("-2"))
+	expect.True(IsInt("-7"))
+	expect.True(IsInt("-8"))
+	expect.True(IsInt("-9"))
+
+	expect.True(IsInt("-000"))
+	expect.True(IsInt("-999"))
+
 	expect.True(IsInt("-123"))
+
+	expect.True(IsInt("-0123"))
+	expect.True(IsInt("-1023"))
+	expect.True(IsInt("-1203"))
+	expect.True(IsInt("-1230"))
+
+	expect.True(IsInt("-9123"))
+	expect.True(IsInt("-1923"))
+	expect.True(IsInt("-1293"))
+	expect.True(IsInt("-1239"))
+
+	expect.True(IsInt("-01239"))
+	expect.True(IsInt("-91230"))
+}
+
+func TestIsIntIncorrect(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
 	expect.False(IsInt("123-"))
 	expect.False(IsInt("1-23"))
 	expect.False(IsInt("a123"))
