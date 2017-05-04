@@ -15,7 +15,6 @@
 package tlog
 
 import (
-	"fmt"
 	"github.com/trivago/tgo/tfmt"
 	"io"
 	"log"
