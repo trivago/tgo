@@ -92,19 +92,37 @@ func (e Expect) False(val bool) bool {
 // Nil tests if the given value is nil
 func (e Expect) Nil(val interface{}) bool {
 	rval := reflect.ValueOf(val)
-	if val != nil && rval.Kind() != reflect.Struct && !rval.IsNil() {
-		e.error("Expected nil")
-		return false
+	switch rval.Kind() {
+	case reflect.Array, reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		if !rval.IsNil() {
+			e.error("Expected nil")
+			return false
+		}
+
+	default:
+		if val != nil {
+			e.error("Expected nil")
+			return false
+		}
 	}
+
 	return true
 }
 
 // NotNil tests if the given value is not nil
 func (e Expect) NotNil(val interface{}) bool {
-	rval := reflect.ValueOf(val)
-	if val == nil || rval.Kind() == reflect.Struct || rval.IsNil() {
+	if val == nil {
 		e.error("Expected not nil")
 		return false
+	}
+
+	rval := reflect.ValueOf(val)
+	switch rval.Kind() {
+	case reflect.Array, reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		if rval.IsNil() {
+			e.error("Expected not nil")
+			return false
+		}
 	}
 	return true
 }
