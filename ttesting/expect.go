@@ -71,7 +71,9 @@ func (e Expect) error(message string) {
 		return
 	}
 	_, file, line, _ := runtime.Caller(2)
-	file = file[strings.Index(file, expectBasePath)+len(expectBasePath):]
+	if basePathIdx := strings.Index(file, expectBasePath); basePathIdx > -1 {
+		file = file[basePathIdx+len(expectBasePath):]
+	}
 
 	fmt.Printf("\t%s:%d: %s -> %s\n", file, line, e.scope, message)
 	e.t.Fail()
@@ -82,7 +84,9 @@ func (e Expect) errorf(format string, args ...interface{}) {
 		return
 	}
 	_, file, line, _ := runtime.Caller(2)
-	file = file[strings.Index(file, expectBasePath)+len(expectBasePath):]
+	if basePathIdx := strings.Index(file, expectBasePath); basePathIdx > -1 {
+		file = file[basePathIdx+len(expectBasePath):]
+	}
 
 	fmt.Printf(fmt.Sprintf("\t%s:%d: %s -> %s\n", file, line, e.scope, format), args...)
 	e.t.Fail()
