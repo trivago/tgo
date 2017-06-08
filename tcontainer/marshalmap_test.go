@@ -27,42 +27,42 @@ func TestMarshalMapBaseTypes(t *testing.T) {
 	testMap["t1"] = 10
 	t1, err := testMap.Int("t1")
 	expect.NoError(err)
-	expect.Equal(t1, int64(10))
+	expect.Equal(int64(10), t1)
 
 	testMap["t2"] = uint64(10)
 	t2, err := testMap.Uint("t2")
 	expect.NoError(err)
-	expect.Equal(t2, uint64(10))
+	expect.Equal(uint64(10), t2)
 
 	testMap["t3"] = float64(10)
 	t3, err := testMap.Float("t3")
 	expect.NoError(err)
-	expect.Equal(t3, float64(10))
+	expect.Equal(float64(10), t3)
 
 	testMap["t3a"] = float32(10)
 	t3a, err := testMap.Float("t3a")
 	expect.NoError(err)
-	expect.Equal(t3a, float64(10))
+	expect.Equal(float64(10), t3a)
 
 	testMap["t4"] = "test"
 	t4, err := testMap.String("t4")
 	expect.NoError(err)
-	expect.Equal(t4, "test")
+	expect.Equal("test", t4)
 
 	testMap["t5"] = "1s"
 	t5, err := testMap.Duration("t5")
 	expect.NoError(err)
-	expect.Equal(t5, time.Second)
+	expect.Equal(time.Second, t5)
 
 	testMap["t6"] = "1m"
 	t6, err := testMap.Duration("t6")
 	expect.NoError(err)
-	expect.Equal(t6, time.Minute)
+	expect.Equal(time.Minute, t6)
 
 	testMap["t7"] = time.Hour
 	t7, err := testMap.Duration("t7")
 	expect.NoError(err)
-	expect.Equal(t7, time.Hour)
+	expect.Equal(time.Hour, t7)
 }
 
 func TestMarshalMapArrays(t *testing.T) {

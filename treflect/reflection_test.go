@@ -109,3 +109,163 @@ func TestSetMap(t *testing.T) {
 
 	expect.Equal(map[string]bool{"foo": true, "bar": true, "a": true}, data.m)
 }
+
+func TestInt64(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	v, ok := Int64(int8(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+
+	v, ok = Int64(int16(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+
+	v, ok = Int64(int32(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+
+	v, ok = Int64(int64(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+
+	v, ok = Int64(float32(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+
+	v, ok = Int64(float64(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+
+	v, ok = Int64(int(10))
+	expect.True(ok)
+	expect.Equal(v, int64(10))
+}
+
+func TestUint64(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	v, ok := Uint64(uint8(10))
+	expect.True(ok)
+	expect.Equal(v, uint64(10))
+
+	v, ok = Uint64(uint16(10))
+	expect.True(ok)
+	expect.Equal(v, uint64(10))
+
+	v, ok = Uint64(uint32(10))
+	expect.True(ok)
+	expect.Equal(v, uint64(10))
+
+	v, ok = Uint64(uint64(10))
+	expect.True(ok)
+	expect.Equal(v, uint64(10))
+
+	v, ok = Uint64(uint(10))
+	expect.True(ok)
+	expect.Equal(v, uint64(10))
+}
+
+func TestFloat32(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	v, ok := Float32(int8(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(int16(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(int32(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(int64(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(uint8(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(uint16(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(uint32(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(uint64(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(float32(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(float64(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(int(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+
+	v, ok = Float32(uint(10))
+	expect.True(ok)
+	expect.Equal(v, float32(10))
+}
+
+func TestFloat64(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	v, ok := Float64(int8(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(int16(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(int32(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(int64(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(uint8(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(uint16(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(uint32(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(uint64(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(float32(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(float64(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(int(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+
+	v, ok = Float64(uint(10))
+	expect.True(ok)
+	expect.Equal(v, float64(10))
+}
