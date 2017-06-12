@@ -22,24 +22,27 @@ import (
 type renamedUint32 uint32
 
 type reflectTestData struct {
-	b    bool
-	ui   uint
-	ui8  uint8
-	ui16 uint16
-	ui32 uint32
-	ui64 uint64
-	i    int
-	i8   int8
-	i16  int16
-	i32  int32
-	i64  int64
-	f32  float32
-	f64  float64
-	s    string
-	by   byte
-	r    renamedUint32
-	sa   []string
-	m    map[string]bool
+	b     bool
+	ui    uint
+	ui8   uint8
+	ui16  uint16
+	ui32  uint32
+	ui64  uint64
+	i     int
+	i8    int8
+	i16   int16
+	i32   int32
+	i64   int64
+	f32   float32
+	f64   float64
+	s     string
+	by    byte
+	r     renamedUint32
+	sa    []string
+	fa    [3]int
+	m     map[string]bool
+	stru  ttesting.Expect
+	iface interface{}
 }
 
 func TestSetValue(t *testing.T) {
@@ -47,6 +50,8 @@ func TestSetValue(t *testing.T) {
 	data := &reflectTestData{}
 	arrayData := []string{"foo", "bar"}
 	mapData := map[string]bool{"foo": true, "bar": true}
+	ifaceData := expect
+	fixedArray := [3]int{1, 2, 3}
 
 	SetMemberByName(data, "b", true)
 	SetMemberByName(data, "by", byte(10))
@@ -66,6 +71,9 @@ func TestSetValue(t *testing.T) {
 	SetMemberByName(data, "sa", arrayData)
 	SetMemberByName(data, "r", renamedUint32(11))
 	SetMemberByName(data, "m", mapData)
+	SetMemberByName(data, "fa", fixedArray)
+	SetMemberByName(data, "stru", ifaceData)
+	SetMemberByName(data, "iface", ifaceData)
 
 	expect.Equal(true, data.b)
 	expect.Equal(byte(10), data.by)
@@ -85,6 +93,8 @@ func TestSetValue(t *testing.T) {
 	expect.Equal(arrayData, data.sa)
 	expect.Equal(renamedUint32(11), data.r)
 	expect.Equal(mapData, data.m)
+	expect.Equal(ifaceData, data.iface)
+	expect.Equal(fixedArray, data.fa)
 }
 
 func TestSetArray(t *testing.T) {
