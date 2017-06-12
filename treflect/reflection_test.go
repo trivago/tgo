@@ -16,6 +16,7 @@ package treflect
 
 import (
 	"github.com/trivago/tgo/ttesting"
+	"reflect"
 	"testing"
 )
 
@@ -278,4 +279,22 @@ func TestFloat64(t *testing.T) {
 	v, ok = Float64(uint(10))
 	expect.True(ok)
 	expect.Equal(v, float64(10))
+}
+
+func TestPtrRemove(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	t1 := int(1)
+	t2 := &t1
+	t3 := &t2
+
+	baseType := reflect.TypeOf(t1)
+	expect.Equal(baseType, RemovePtrFromType(t1))
+	expect.Equal(baseType, RemovePtrFromType(t2))
+	expect.Equal(baseType, RemovePtrFromType(t3))
+
+	expect.Equal(baseType, RemovePtrFromValue(t1).Type())
+	expect.Equal(baseType, RemovePtrFromValue(t2).Type())
+	expect.Equal(baseType, RemovePtrFromValue(t3).Type())
+
 }
