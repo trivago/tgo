@@ -293,8 +293,16 @@ func TestPtrRemove(t *testing.T) {
 	expect.Equal(baseType, RemovePtrFromType(t2))
 	expect.Equal(baseType, RemovePtrFromType(t3))
 
+	expect.Equal(baseType, RemovePtrFromType(reflect.TypeOf(t1)))
+	expect.Equal(baseType, RemovePtrFromType(reflect.TypeOf(t2)))
+	expect.Equal(baseType, RemovePtrFromType(reflect.TypeOf(t3)))
+
 	expect.Equal(baseType, RemovePtrFromValue(t1).Type())
 	expect.Equal(baseType, RemovePtrFromValue(t2).Type())
 	expect.Equal(baseType, RemovePtrFromValue(t3).Type())
+
+	expect.Equal(baseType, RemovePtrFromValue(reflect.ValueOf(t1)).Type())
+	expect.Equal(baseType, RemovePtrFromValue(reflect.ValueOf(t2)).Type())
+	expect.Equal(baseType, RemovePtrFromValue(reflect.ValueOf(t3)).Type())
 
 }
