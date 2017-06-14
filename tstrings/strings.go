@@ -224,8 +224,8 @@ func GetNumBase(num string) (string, int) {
 	case len(num) == 0:
 		return num, 10
 
-	case num[0] == '0':
-		if len(num) > 1 && num[1] == 'x' {
+	case len(num) > 1 && num[0] == '0':
+		if num[1] == 'x' {
 			return num[2:], 16
 		}
 		return num[1:], 8
