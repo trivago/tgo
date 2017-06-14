@@ -220,3 +220,35 @@ func TestTrimToNumber(t *testing.T) {
 	result = TrimToNumber(test)
 	expect.Equal("10", result)
 }
+
+func TestAtoI64(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	val, err := AtoI64("016")
+	expect.NoError(err)
+	expect.Equal(int64(016), val)
+
+	val, err = AtoI64("0x16")
+	expect.NoError(err)
+	expect.Equal(int64(0x16), val)
+
+	val, err = AtoI64("16")
+	expect.NoError(err)
+	expect.Equal(int64(16), val)
+}
+
+func TestAtoU64(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+
+	val, err := AtoU64("016")
+	expect.NoError(err)
+	expect.Equal(uint64(016), val)
+
+	val, err = AtoU64("0x16")
+	expect.NoError(err)
+	expect.Equal(uint64(0x16), val)
+
+	val, err = AtoU64("16")
+	expect.NoError(err)
+	expect.Equal(uint64(16), val)
+}
