@@ -236,6 +236,9 @@ func GetNumBase(num string) (string, int) {
 // AtoI64 converts a numeric string to an int64, using GetNumBase to detect
 // the numeric base for conversion.
 func AtoI64(num string) (int64, error) {
+	if len(num) == 0 {
+		return 0, nil
+	}
 	n, b := GetNumBase(num)
 	return strconv.ParseInt(n, b, 64)
 }
@@ -243,6 +246,9 @@ func AtoI64(num string) (int64, error) {
 // AtoU64 converts a numeric string to an uint64, using GetNumBase to detect
 // the numeric base for conversion.
 func AtoU64(num string) (uint64, error) {
+	if len(num) == 0 {
+		return 0, nil
+	}
 	n, b := GetNumBase(num)
 	return strconv.ParseUint(n, b, 64)
 }

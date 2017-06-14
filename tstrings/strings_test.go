@@ -235,6 +235,10 @@ func TestAtoI64(t *testing.T) {
 	val, err = AtoI64("16")
 	expect.NoError(err)
 	expect.Equal(int64(16), val)
+
+	val, err = AtoI64("")
+	expect.NoError(err)
+	expect.Equal(int64(0), val)
 }
 
 func TestAtoU64(t *testing.T) {
@@ -251,4 +255,8 @@ func TestAtoU64(t *testing.T) {
 	val, err = AtoU64("16")
 	expect.NoError(err)
 	expect.Equal(uint64(16), val)
+
+	val, err = AtoU64("")
+	expect.NoError(err)
+	expect.Equal(uint64(0), val)
 }
