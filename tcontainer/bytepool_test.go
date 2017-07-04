@@ -15,10 +15,13 @@
 package tcontainer
 
 import (
+	"bytes"
+	"encoding/binary"
 	"github.com/trivago/tgo/ttesting"
-	//"runtime"
+	"math/rand"
+	"sync"
 	"testing"
-	//"time"
+	"time"
 )
 
 func TestBytePool(t *testing.T) {
@@ -61,74 +64,51 @@ func TestBytePool(t *testing.T) {
 	expect.Equal(huge, len(hugeMax))
 }
 
-/*func TestBytePool(t *testing.T) {
+func TestBytePoolParallel(t *testing.T) {
 	expect := ttesting.NewExpect(t)
 	pool := NewBytePool()
 
-	tinyMin := pool.Get(1)
-	expect.Equal(pool.tiny.unit, cap(tinyMin))
-	expect.Equal(1, len(tinyMin))
+	start := new(sync.WaitGroup)
+	done := make(chan int)
 
-	tinyMax := pool.Get(pool.tiny.max)
-	expect.Equal(pool.tiny.max, cap(tinyMax))
-	expect.Equal(pool.tiny.max, len(tinyMax))
-
-	smallMin := pool.Get(pool.tiny.max + 1)
-	expect.Equal(pool.small.unit, cap(smallMin))
-	expect.Equal(pool.tiny.max+1, len(smallMin))
-
-	smallMax := pool.Get(pool.small.max)
-	expect.Equal(pool.small.max, cap(smallMax))
-	expect.Equal(pool.small.max, len(smallMax))
-
-	mediumMin := pool.Get(pool.small.max + 1)
-	expect.Equal(pool.medium.unit, cap(mediumMin))
-	expect.Equal(pool.small.max+1, len(mediumMin))
-
-	mediumMax := pool.Get(pool.medium.max)
-	expect.Equal(pool.medium.max, cap(mediumMax))
-	expect.Equal(pool.medium.max, len(mediumMax))
-
-	largeMin := pool.Get(pool.medium.max + 1)
-	expect.Equal(pool.large.unit, cap(largeMin))
-	expect.Equal(pool.medium.max+1, len(largeMin))
-
-	largeMax := pool.Get(pool.large.max)
-	expect.Equal(pool.large.max, cap(largeMax))
-	expect.Equal(pool.large.max, len(largeMax))
-
-	huge := pool.Get(pool.large.max + 1)
-	expect.Equal(pool.large.max+1, cap(huge))
-	expect.Equal(pool.large.max+1, len(huge))
-}
-
-func allocateWaste(pool *BytePool, expect ttesting.Expect) {
-	data := pool.Get(32)
-	for i := 0; i < 32; i++ {
-		data[i] = byte(i)
-	}
-
-	expect.Equal(int32(-1), *pool.tiny.slabs[0].top)
-}
-
-func TestBytePoolRecycle(t *testing.T) {
-	expect := ttesting.NewExpect(t)
-	pool := NewBytePool()
-
-	expect.Nil(pool.tiny.slabs[0])
-	allocateWaste(&pool, expect)
-
-	expect.NonBlocking(time.Second, func() {
-		for *pool.tiny.slabs[0].top < 0 {
-			runtime.Gosched()
-			runtime.GC()
+	allocate := func() {
+		start.Wait()
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				pool.Get(rand.Intn(huge))
+			}
 		}
-	})
-
-	expect.Equal(int32(0), *pool.tiny.slabs[0].top)
-
-	data := pool.Get(32)
-	for i := 0; i < 32; i++ {
-		expect.Equal(byte(i), data[i])
 	}
-}*/
+
+	start.Add(1)
+	for i := 0; i < 100; i++ {
+		go expect.NoPanic(allocate)
+	}
+	start.Done()
+
+	time.Sleep(2 * time.Second)
+	close(done)
+}
+
+func TestBytePoolUnique(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	pool := NewBytePool()
+
+	numTests := tinyCount * 10
+	chunks := make([][]byte, numTests)
+
+	for i := 0; i < numTests; i++ {
+		data := pool.Get(8)
+		binary.PutVarint(data, int64(i))
+		chunks[i] = data
+	}
+
+	for i := 0; i < numTests; i++ {
+		num, err := binary.ReadVarint(bytes.NewReader(chunks[i]))
+		expect.NoError(err)
+		expect.Equal(int64(i), num)
+	}
+}
