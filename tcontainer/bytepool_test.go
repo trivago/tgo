@@ -29,37 +29,36 @@ func TestBytePool(t *testing.T) {
 	expect.Equal(tiny, cap(tinyMin))
 	expect.Equal(1, len(tinyMin))
 
-	tinyMax := pool.Get(small - tiny)
-	expect.Equal(small-tiny, cap(tinyMax))
-	expect.Equal(small-tiny, len(tinyMax))
+	tinyMax := pool.Get(tiny)
+	expect.Equal(tiny, len(tinyMax))
 
-	smallMin := pool.Get(small - tiny + 1)
+	smallMin := pool.Get(tiny + 1)
 	expect.Equal(small, cap(smallMin))
-	expect.Equal(small-tiny+1, len(smallMin))
+	expect.Equal(tiny+1, len(smallMin))
 
-	smallMax := pool.Get(medium - small)
-	expect.Equal(medium-small, cap(smallMax))
-	expect.Equal(medium-small, len(smallMax))
+	smallMax := pool.Get(small)
+	expect.Equal(small, len(smallMax))
 
-	mediumMin := pool.Get(medium - small + 1)
+	mediumMin := pool.Get(small + 1)
 	expect.Equal(medium, cap(mediumMin))
-	expect.Equal(medium-small+1, len(mediumMin))
+	expect.Equal(small+1, len(mediumMin))
 
-	mediumMax := pool.Get(large - medium)
-	expect.Equal(large-medium, cap(mediumMax))
-	expect.Equal(large-medium, len(mediumMax))
+	mediumMax := pool.Get(medium)
+	expect.Equal(medium, len(mediumMax))
 
-	largeMin := pool.Get(large - medium + 1)
+	largeMin := pool.Get(medium + 1)
 	expect.Equal(large, cap(largeMin))
-	expect.Equal(large-medium+1, len(largeMin))
+	expect.Equal(medium+1, len(largeMin))
 
-	largeMax := pool.Get(huge - large)
-	expect.Equal(huge-large, cap(largeMax))
-	expect.Equal(huge-large, len(largeMax))
+	largeMax := pool.Get(large)
+	expect.Equal(large, len(largeMax))
 
-	hugeMin := pool.Get(huge - large + 1)
-	expect.Equal(huge-large+1, cap(hugeMin))
-	expect.Equal(huge-large+1, len(hugeMin))
+	hugeMin := pool.Get(large + 1)
+	expect.Equal(huge, cap(hugeMin))
+	expect.Equal(large+1, len(hugeMin))
+
+	hugeMax := pool.Get(huge)
+	expect.Equal(huge, len(hugeMax))
 }
 
 /*func TestBytePool(t *testing.T) {
