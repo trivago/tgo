@@ -15,7 +15,6 @@
 package tcontainer
 
 import (
-	"fmt"
 	"reflect"
 	"runtime"
 	"sync/atomic"
