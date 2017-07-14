@@ -33,6 +33,14 @@ func TestParseAddress(t *testing.T) {
 	proto, addr = ParseAddress("192.168.0.1:20", "tcp")
 	expect.Equal("tcp", proto)
 	expect.Equal("192.168.0.1:20", addr)
+
+	proto, addr = ParseAddress("80", "tcp")
+	expect.Equal("tcp", proto)
+	expect.Equal(":80", addr)
+
+	proto, addr = ParseAddress("tcp://80", "")
+	expect.Equal("tcp", proto)
+	expect.Equal(":80", addr)
 }
 
 func TestSplitAddress(t *testing.T) {
@@ -51,7 +59,20 @@ func TestSplitAddress(t *testing.T) {
 	expect.Equal("20", port)
 
 	proto, addr, port, err = SplitAddress("192.168.0.1:20", "tcp")
+	expect.NoError(err)
 	expect.Equal("tcp", proto)
 	expect.Equal("192.168.0.1", addr)
 	expect.Equal("20", port)
+
+	proto, addr, port, err = SplitAddress("80", "tcp")
+	expect.NoError(err)
+	expect.Equal("tcp", proto)
+	expect.Equal("localhost", addr)
+	expect.Equal("80", port)
+
+	proto, addr, port, err = SplitAddress("tcp://80", "")
+	expect.NoError(err)
+	expect.Equal("tcp", proto)
+	expect.Equal("localhost", addr)
+	expect.Equal("80", port)
 }
