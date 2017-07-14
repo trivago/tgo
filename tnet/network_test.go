@@ -67,12 +67,12 @@ func TestSplitAddress(t *testing.T) {
 	proto, addr, port, err = SplitAddress("80", "tcp")
 	expect.NoError(err)
 	expect.Equal("tcp", proto)
-	expect.Equal("localhost", addr)
+	expect.Equal("", addr)
 	expect.Equal("80", port)
 
 	proto, addr, port, err = SplitAddress("tcp://80", "")
 	expect.NoError(err)
 	expect.Equal("tcp", proto)
-	expect.Equal("localhost", addr)
+	expect.Equal("", addr)
 	expect.Equal("80", port)
 }

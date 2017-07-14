@@ -49,19 +49,15 @@ func ParseAddress(addressString string, defaultProtocol string) (protocol, addre
 
 // SplitAddress splits an address of the form "protocol://host:port" into its
 // components. If no protocol is given, defaultProtocol is used.
-// An empty host will be converted to "localhost".
 // This function uses net.SplitHostPort and ParseAddress.
 func SplitAddress(addressString string, defaultProtocol string) (protocol, host, port string, err error) {
-	proto, address := ParseAddress(addressString, defaultProtocol)
-	if proto == "unix" || proto == "unixgram" || proto == "unixpacket" {
-		return proto, address, "", nil
+	protocol, host = ParseAddress(addressString, defaultProtocol)
+	if protocol == "unix" || protocol == "unixgram" || protocol == "unixpacket" {
+		return
 	}
 
-	host, port, err = net.SplitHostPort(address)
-	if host == "" {
-		host = "localhost"
-	}
-	return proto, host, port, err
+	host, port, err = net.SplitHostPort(host)
+	return
 }
 
 // IsDisconnectedError returns true if the given error is related to a
