@@ -15,9 +15,10 @@
 package tcontainer
 
 import (
-	"github.com/trivago/tgo/ttesting"
 	"testing"
 	"time"
+
+	"github.com/trivago/tgo/ttesting"
 )
 
 func TestMarshalMapBaseTypes(t *testing.T) {
@@ -356,4 +357,29 @@ func TestMarshalMapConvert(t *testing.T) {
 
 	_, err = ConvertToMarshalMap(mapRoot3, nil)
 	expect.NoError(err)
+}
+
+func TestMarshalMapClone(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	testMap := NewMarshalMap()
+
+	testMap["t1"] = 10
+	testMap["t2"] = uint64(10)
+	testMap["t3"] = "test"
+	testMap["t4"] = []byte("test")
+	testMap["t5"] = []int{1, 2, 3}
+
+	cloneTest1 := testMap.Clone()
+	expect.Equal(testMap, cloneTest1)
+
+	testMap["nested1"] = cloneTest1
+	testMap["nested2"] = map[interface{}]interface{}{
+		1:     "test",
+		"foo": "bar",
+		3.1:   []int{1, 2, 3},
+	}
+	testMap["nested3"] = []MarshalMap{cloneTest1}
+
+	cloneTest2 := testMap.Clone()
+	expect.Equal(testMap, cloneTest2)
 }
