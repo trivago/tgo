@@ -133,13 +133,15 @@ func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength
 		buffer.encoding = binary.BigEndian
 	}
 
+	
+	if flags == BufferedReaderFlagMultiline {
+		buffer.parse = buffer.parseDelimiterMultiLine
+		return &buffer;
+	}
+
+
 	if flags&BufferedReaderFlagMaskMLE == 0 {
-		if flags == BufferedReaderFlagDelimiter {
-			buffer.parse = buffer.parseDelimiter
-		}
-		if flags == BufferedReaderFlagMultiline {
-			buffer.parse = buffer.parseDelimiterMultiLine
-		}
+		buffer.parse = buffer.parseDelimiter	
 	} else {
 		switch flags & BufferedReaderFlagMaskMLE {
 		default:
