@@ -17,8 +17,10 @@ package tio
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/trivago/tgo/tstrings"
 	"io"
+	"regexp"
+
+	"github.com/trivago/tgo/tstrings"
 )
 
 // BufferedReaderFlags is an enum to configure a buffered reader
@@ -68,6 +70,10 @@ const (
 	// BufferedReaderFlagEverything will keep MLE and/or delimiters when
 	// building a message.
 	BufferedReaderFlagEverything = BufferedReaderFlags(16)
+
+	// BufferedReaderFlagMultiline enables reading multiline messages delimited by regexp.
+	// delimeter regexp indicate start of message
+	BufferedReaderFlagMultiline = BufferedReaderFlags(32)
 )
 
 type bufferError string
@@ -89,15 +95,16 @@ var BufferDataInvalid = bufferError("Invalid data")
 // has been reached. The latter has to be enabled by flag and will disable the
 // default behavior, which is looking for a delimiter string.
 type BufferedReader struct {
-	data       []byte
-	delimiter  []byte
-	parse      func() ([]byte, int)
-	paramMLE   int
-	growSize   int
-	end        int
-	encoding   binary.ByteOrder
-	flags      BufferedReaderFlags
-	incomplete bool
+	data         []byte
+	delimiter    []byte
+	parse        func() ([]byte, int)
+	paramMLE     int
+	growSize     int
+	end          int
+	encoding     binary.ByteOrder
+	flags        BufferedReaderFlags
+	incomplete   bool
+	delimiterStr string
 }
 
 // NewBufferedReader creates a new buffered reader that reads messages from a
@@ -111,14 +118,15 @@ type BufferedReader struct {
 // delimiter defines the delimiter used for textual message parsing
 func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength int, delimiter string) *BufferedReader {
 	buffer := BufferedReader{
-		data:       make([]byte, bufferSize),
-		delimiter:  []byte(delimiter),
-		paramMLE:   offsetOrLength,
-		encoding:   binary.LittleEndian,
-		end:        0,
-		flags:      flags,
-		growSize:   bufferSize,
-		incomplete: true,
+		data:         make([]byte, bufferSize),
+		delimiter:    []byte(delimiter),
+		paramMLE:     offsetOrLength,
+		encoding:     binary.LittleEndian,
+		end:          0,
+		flags:        flags,
+		growSize:     bufferSize,
+		incomplete:   true,
+		delimiterStr: delimiter,
 	}
 
 	if flags&BufferedReaderFlagBigEndian != 0 {
@@ -126,7 +134,12 @@ func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength
 	}
 
 	if flags&BufferedReaderFlagMaskMLE == 0 {
-		buffer.parse = buffer.parseDelimiter
+		if flags == BufferedReaderFlagDelimiter {
+			buffer.parse = buffer.parseDelimiter
+		}
+		if flags == BufferedReaderFlagMultiline {
+			buffer.parse = buffer.parseDelimiterMultiLine
+		}
 	} else {
 		switch flags & BufferedReaderFlagMaskMLE {
 		default:
@@ -255,6 +268,55 @@ func (buffer *BufferedReader) parseMLE64() ([]byte, int) {
 		return nil, -1 // ### return, malformed ###
 	}
 	return buffer.extractMessage(int(messageLen), buffer.paramMLE+8)
+}
+
+// messages are separated by regexp
+func (buffer *BufferedReader) parseDelimiterMultiLine() ([]byte, int) {
+	startRegexp := regexp.MustCompile(buffer.delimiterStr)
+	lineDelimiter := []byte("\n")
+
+	hasMessage := false
+	messageStarted := false
+	loopStartIdx := 0
+	endIdx := 0
+
+	for true {
+		endIdx = bytes.Index(buffer.data[loopStartIdx:buffer.end], lineDelimiter)
+
+		if endIdx < 0 {
+			if messageStarted == true {
+				hasMessage = true
+				endIdx = loopStartIdx
+			}
+			break
+		}
+
+		endIdx++
+		endIdx += loopStartIdx
+
+		startLoc := startRegexp.FindIndex(buffer.data[loopStartIdx:endIdx])
+
+		if startLoc != nil {
+			if messageStarted == true {
+				endIdx = loopStartIdx
+				break
+			}
+			messageStarted = true
+			hasMessage = true
+			loopStartIdx = endIdx
+			continue
+		}
+		loopStartIdx = endIdx
+	}
+
+	if hasMessage == false {
+		return nil, 0
+	}
+
+	message := buffer.data[:endIdx]
+	nextMsgIdx := endIdx
+
+	return message, nextMsgIdx
 }
 
 // ReadAll calls ReadOne as long as there are messages in the stream.
