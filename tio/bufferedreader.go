@@ -95,16 +95,16 @@ var BufferDataInvalid = bufferError("Invalid data")
 // has been reached. The latter has to be enabled by flag and will disable the
 // default behavior, which is looking for a delimiter string.
 type BufferedReader struct {
-	data         []byte
-	delimiter    []byte
-	parse        func() ([]byte, int)
-	paramMLE     int
-	growSize     int
-	end          int
-	encoding     binary.ByteOrder
-	flags        BufferedReaderFlags
-	incomplete   bool
-	delimiterStr string
+	data            []byte
+	delimiter       []byte
+	parse           func() ([]byte, int)
+	paramMLE        int
+	growSize        int
+	end             int
+	encoding        binary.ByteOrder
+	flags           BufferedReaderFlags
+	incomplete      bool
+	delimiterRegexp *regexp.Regexp
 }
 
 // NewBufferedReader creates a new buffered reader that reads messages from a
@@ -118,30 +118,29 @@ type BufferedReader struct {
 // delimiter defines the delimiter used for textual message parsing
 func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength int, delimiter string) *BufferedReader {
 	buffer := BufferedReader{
-		data:         make([]byte, bufferSize),
-		delimiter:    []byte(delimiter),
-		paramMLE:     offsetOrLength,
-		encoding:     binary.LittleEndian,
-		end:          0,
-		flags:        flags,
-		growSize:     bufferSize,
-		incomplete:   true,
-		delimiterStr: delimiter,
+		data:            make([]byte, bufferSize),
+		delimiter:       []byte(delimiter),
+		paramMLE:        offsetOrLength,
+		encoding:        binary.LittleEndian,
+		end:             0,
+		flags:           flags,
+		growSize:        bufferSize,
+		incomplete:      true,
+		delimiterRegexp: nil,
 	}
 
 	if flags&BufferedReaderFlagBigEndian != 0 {
 		buffer.encoding = binary.BigEndian
 	}
 
-	
 	if flags == BufferedReaderFlagMultiline {
 		buffer.parse = buffer.parseDelimiterMultiLine
-		return &buffer;
+		buffer.delimiterRegexp = regexp.MustCompile(delimiter)
+		return &buffer
 	}
 
-
 	if flags&BufferedReaderFlagMaskMLE == 0 {
-		buffer.parse = buffer.parseDelimiter	
+		buffer.parse = buffer.parseDelimiter
 	} else {
 		switch flags & BufferedReaderFlagMaskMLE {
 		default:
@@ -274,7 +273,7 @@ func (buffer *BufferedReader) parseMLE64() ([]byte, int) {
 
 // messages are separated by regexp
 func (buffer *BufferedReader) parseDelimiterMultiLine() ([]byte, int) {
-	startRegexp := regexp.MustCompile(buffer.delimiterStr)
+	startRegexp := buffer.delimiterRegexp
 	lineDelimiter := []byte("\n")
 
 	hasMessage := false
@@ -282,7 +281,7 @@ func (buffer *BufferedReader) parseDelimiterMultiLine() ([]byte, int) {
 	loopStartIdx := 0
 	endIdx := 0
 
-	for true {
+	for {
 		endIdx = bytes.Index(buffer.data[loopStartIdx:buffer.end], lineDelimiter)
 
 		if endIdx < 0 {
