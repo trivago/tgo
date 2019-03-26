@@ -61,10 +61,10 @@ func TestBufferedReaderMultilineDelimiter(t *testing.T) {
 		tokens: []string{
 			"1111-12-06 1\n",
 			"2222-12-06T14:58:44.060 [qtp1860944798-11] a08b3652499144f4ac7bbf0bb12e012f ERROR portal2Service.App - \n" +
-			"java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30013ms.\n" +
-			"  at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:676)\n" +
-			"  at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:190)\n" +
-			"  ... 21 common frames omitted\n",
+				"java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30013ms.\n" +
+				"  at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:676)\n" +
+				"  at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:190)\n" +
+				"  ... 21 common frames omitted\n",
 			"3333-12-06 3\n",
 		},
 		parsed: 0,
@@ -72,11 +72,15 @@ func TestBufferedReaderMultilineDelimiter(t *testing.T) {
 
 	parseData := strings.Join(data.tokens, "")
 	parseReader := strings.NewReader(parseData)
-	reader := NewBufferedReader(1024, 32, 0, "^\\d{4}-\\d{2}-\\d{2}")
+	reader := NewBufferedReader(1024, BufferedReaderFlagRegexStart, 0, "(?m)^\\d{4}-\\d{2}-\\d{2}")
 
 	err := reader.ReadAll(parseReader, data.write)
 	// data.expect.Equal(io.EOF, err)
-	data.expect.Equal(3, data.parsed)
+
+	data.expect.Equal(2, data.parsed)
+
+	remains := reader.ResetGetIncomplete()
+	data.expect.Greater(len(remains), 0)
 
 	msg, _, err := reader.ReadOne(parseReader)
 	data.expect.Equal(io.EOF, err)

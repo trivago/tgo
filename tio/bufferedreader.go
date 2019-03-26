@@ -71,9 +71,13 @@ const (
 	// building a message.
 	BufferedReaderFlagEverything = BufferedReaderFlags(16)
 
-	// BufferedReaderFlagMultiline enables reading multiline messages delimited by regexp.
-	// delimeter regexp indicate start of message
-	BufferedReaderFlagMultiline = BufferedReaderFlags(32)
+	// BufferedReaderFlagRegex enables reading messages delimited by regexp.
+	// To enable multiline reading, prefix the regex with "(?m)"
+	BufferedReaderFlagRegex = BufferedReaderFlags(32)
+
+	// BufferedReaderFlagRegexStart switches regex reading to find the start
+	// of the next message instead of looking for the end of the current.
+	BufferedReaderFlagRegexStart = BufferedReaderFlags(64 + 32)
 )
 
 type bufferError string
@@ -112,10 +116,11 @@ type BufferedReader struct {
 // Messages can be separated from the stream by using common methods such as
 // fixed size, encoded message length or delimiter string.
 // The internal buffer is grown statically (by its original size) if necessary.
-// bufferSize defines the initial size / grow size of the buffer
-// flags configures the parsing method
-// offsetOrLength sets either the runlength offset or fixed message size
-// delimiter defines the delimiter used for textual message parsing
+// bufferSize defines the initial size / grow size of the buffer.
+// flags configures the parsing method.
+// offsetOrLength sets either the runlength offset or fixed message size.
+// delimiter defines the delimiter used for textual message parsing, i.e.
+// BufferedReaderFlagDelimiter or BufferedReaderFlagRegex.
 func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength int, delimiter string) *BufferedReader {
 	buffer := BufferedReader{
 		data:            make([]byte, bufferSize),
@@ -133,8 +138,8 @@ func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength
 		buffer.encoding = binary.BigEndian
 	}
 
-	if flags == BufferedReaderFlagMultiline {
-		buffer.parse = buffer.parseDelimiterMultiLine
+	if flags&BufferedReaderFlagRegex != 0 {
+		buffer.parse = buffer.parseDelimiterRegex
 		buffer.delimiterRegexp = regexp.MustCompile(delimiter)
 		return &buffer
 	}
@@ -165,6 +170,22 @@ func NewBufferedReader(bufferSize int, flags BufferedReaderFlags, offsetOrLength
 func (buffer *BufferedReader) Reset(sequence uint64) {
 	buffer.end = 0
 	buffer.incomplete = true
+}
+
+// ResetGetIncomplete works like Reset but returns any incomplete contents
+// left in the buffer as a copy.
+func (buffer *BufferedReader) ResetGetIncomplete() []byte {
+	if !buffer.incomplete {
+		buffer.end = 0
+		return []byte{}
+	}
+
+	dataCopy := make([]byte, buffer.end)
+	copy(dataCopy, buffer.data[:buffer.end])
+
+	buffer.end = 0
+	buffer.incomplete = true
+	return dataCopy
 }
 
 // general message extraction part of all parser methods
@@ -272,52 +293,29 @@ func (buffer *BufferedReader) parseMLE64() ([]byte, int) {
 }
 
 // messages are separated by regexp
-func (buffer *BufferedReader) parseDelimiterMultiLine() ([]byte, int) {
-	startRegexp := buffer.delimiterRegexp
-	lineDelimiter := []byte("\n")
-
-	hasMessage := false
-	messageStarted := false
-	loopStartIdx := 0
-	endIdx := 0
+func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
+	startOffset := 0
+	nextIdx := 0
 
 	for {
-		endIdx = bytes.Index(buffer.data[loopStartIdx:buffer.end], lineDelimiter)
+		delimiterIdx := buffer.delimiterRegexp.FindIndex(buffer.data[startOffset:buffer.end])
+		if delimiterIdx == nil {
+			return nil, 0 // ### return, incomplete ###
+		}
 
-		if endIdx < 0 {
-			if messageStarted == true {
-				hasMessage = true
-				endIdx = loopStartIdx
-			}
+		nextIdx = delimiterIdx[1]
+
+		if buffer.flags&BufferedReaderFlagRegexStart == 0 {
+			break
+		}
+		if startOffset > 0 {
 			break
 		}
 
-		endIdx++
-		endIdx += loopStartIdx
-
-		startLoc := startRegexp.FindIndex(buffer.data[loopStartIdx:endIdx])
-
-		if startLoc != nil {
-			if messageStarted == true {
-				endIdx = loopStartIdx
-				break
-			}
-			messageStarted = true
-			hasMessage = true
-			loopStartIdx = endIdx
-			continue
-		}
-		loopStartIdx = endIdx
+		startOffset = nextIdx
 	}
 
-	if hasMessage == false {
-		return nil, 0
-	}
-
-	message := buffer.data[:endIdx]
-	nextMsgIdx := endIdx
-
-	return message, nextMsgIdx
+	return buffer.extractMessage(nextIdx, 0)
 }
 
 // ReadAll calls ReadOne as long as there are messages in the stream.
