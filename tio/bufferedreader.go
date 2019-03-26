@@ -305,13 +305,18 @@ func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
 
 		nextIdx = delimiterIdx[1]
 
+		// If we look for end of message, we're done
 		if buffer.flags&BufferedReaderFlagRegexStart == 0 {
 			break
 		}
-		if startOffset > 0 {
+
+		// If we did find a start offset or if the first occurrence is not at
+		// the start of the message we are done
+		if startOffset > 0 || delimiterIdx[0] > 0 {
 			break
 		}
 
+		// Found start of first message, look for start of second message
 		startOffset = nextIdx
 	}
 
