@@ -301,21 +301,22 @@ func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
 			return nil, 0 // ### return, incomplete ###
 		}
 
-		// If we look for end of message, we're done
+		// If we do end of message parsing, we're done
 		if buffer.flags&BufferedReaderFlagRegexStart != BufferedReaderFlagRegexStart {
 			nextIdx = delimiterIdx[1]
 			break
 		}
 
-		// We're done as this is the second pass (start offset != 0)
-		// If we have data before the match we're done with the remains of an incomplete message
+		// We're done if this is the second pass (start offset > 0)
+		// We're done if we have data before the match (incomplete message)
 		if startOffset > 0 || delimiterIdx[0] > 0 {
 			nextIdx = delimiterIdx[0] + startOffset
 			break
 		}
 
-		// Found start of first message, look for start of second message.
-		startOffset = delimiterIdx[1] + startOffset
+		// Found delimiter at start of data, look for the start of a second message.
+		// We don't need to add startOffset here as we never reach this if startOffset != 0
+		startOffset = delimiterIdx[1]
 	}
 
 	return buffer.extractMessage(nextIdx, 0)
