@@ -293,7 +293,6 @@ func (buffer *BufferedReader) parseMLE64() ([]byte, int) {
 // messages are separated by regexp
 func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
 	startOffset := 0
-	nextIdx := 0
 
 	for {
 		delimiterIdx := buffer.delimiterRegexp.FindIndex(buffer.data[startOffset:buffer.end])
@@ -303,23 +302,19 @@ func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
 
 		// If we do end of message parsing, we're done
 		if buffer.flags&BufferedReaderFlagRegexStart != BufferedReaderFlagRegexStart {
-			nextIdx = delimiterIdx[1]
-			break
+			return buffer.extractMessage(delimiterIdx[1], 0) // ### done, end of line ###
 		}
 
 		// We're done if this is the second pass (start offset > 0)
 		// We're done if we have data before the match (incomplete message)
 		if startOffset > 0 || delimiterIdx[0] > 0 {
-			nextIdx = delimiterIdx[0] + startOffset
-			break
+			return buffer.extractMessage(delimiterIdx[0]+startOffset, 0) // ### done, start of line ###
 		}
 
 		// Found delimiter at start of data, look for the start of a second message.
 		// We don't need to add startOffset here as we never reach this if startOffset != 0
 		startOffset = delimiterIdx[1]
 	}
-
-	return buffer.extractMessage(nextIdx, 0)
 }
 
 // ReadAll calls ReadOne as long as there are messages in the stream.
