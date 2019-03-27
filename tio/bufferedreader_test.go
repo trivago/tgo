@@ -55,36 +55,73 @@ func TestBufferedReaderDelimiter(t *testing.T) {
 	data.expect.Nil(msg)
 }
 
-func TestBufferedReaderMultilineDelimiter(t *testing.T) {
-	data := bufferedReaderTestData{
-		expect: ttesting.NewExpect(t),
-		tokens: []string{
-			"1111-12-06 1\n",
-			"2222-12-06T14:58:44.060 [qtp1860944798-11] a08b3652499144f4ac7bbf0bb12e012f ERROR portal2Service.App - \n" +
-				"java.sql.SQLTransientConnectionException: HikariPool-1 - Connection is not available, request timed out after 30013ms.\n" +
-				"  at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:676)\n" +
-				"  at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:190)\n" +
-				"  ... 21 common frames omitted\n",
-			"3333-12-06 3\n",
-		},
-		parsed: 0,
+func TestBufferedReaderRegexStart(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	data := []string{
+		"incomplete\n",
+		"XXXX message\n",
+		"XXXX multi\nline\nmessage\n",
+		"XXXX trailing",
 	}
 
-	parseData := strings.Join(data.tokens, "")
-	parseReader := strings.NewReader(parseData)
-	reader := NewBufferedReader(1024, BufferedReaderFlagRegexStart, 0, "(?m)^\\d{4}-\\d{2}-\\d{2}")
+	parseReader := strings.NewReader(strings.Join(data, ""))
+	reader := NewBufferedReader(1024, BufferedReaderFlagRegexStart, 0, "(?m)^XXXX")
 
-	err := reader.ReadAll(parseReader, data.write)
-	// data.expect.Equal(io.EOF, err)
+	parsedData := []string{}
+	err := reader.ReadAll(parseReader, func(m []byte) {
+		parsedData = append(parsedData, string(m))
+	})
 
-	data.expect.Equal(2, data.parsed)
+	expect.Equal(io.EOF, err)
+	expect.Equal(len(data)-1, len(parsedData))
 
-	remains := reader.ResetGetIncomplete()
-	data.expect.Greater(len(remains), 0)
+	expect.True(reader.HasIncompleteData())
+	parsedData = append(parsedData, string(reader.ResetGetIncomplete()))
 
-	msg, _, err := reader.ReadOne(parseReader)
-	data.expect.Equal(io.EOF, err)
-	data.expect.Nil(msg)
+	expect.False(reader.HasIncompleteData())
+
+	for i, original := range data {
+		expect.Equal(original, parsedData[i])
+	}
+
+	msg, more, err := reader.ReadOne(parseReader)
+	expect.False(more)
+	expect.Equal(io.EOF, err)
+	expect.Nil(msg)
+}
+
+func TestBufferedReaderRegexEnd(t *testing.T) {
+	expect := ttesting.NewExpect(t)
+	data := []string{
+		"message XXXX\n",
+		"multi\nline\nmessage XXXX\n",
+		"incomplete",
+	}
+
+	parseReader := strings.NewReader(strings.Join(data, ""))
+	reader := NewBufferedReader(1024, BufferedReaderFlagRegex, 0, "XXXX\n")
+
+	parsedData := []string{}
+	err := reader.ReadAll(parseReader, func(m []byte) {
+		parsedData = append(parsedData, string(m))
+	})
+
+	expect.Equal(io.EOF, err)
+	expect.Equal(len(data)-1, len(parsedData))
+
+	expect.True(reader.HasIncompleteData())
+	parsedData = append(parsedData, string(reader.ResetGetIncomplete()))
+
+	expect.False(reader.HasIncompleteData())
+
+	for i, original := range data {
+		expect.Equal(original, parsedData[i])
+	}
+
+	msg, more, err := reader.ReadOne(parseReader)
+	expect.False(more)
+	expect.Equal(io.EOF, err)
+	expect.Nil(msg)
 }
 
 func TestBufferedReaderMLEText(t *testing.T) {

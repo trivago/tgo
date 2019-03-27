@@ -173,19 +173,17 @@ func (buffer *BufferedReader) Reset(sequence uint64) {
 }
 
 // ResetGetIncomplete works like Reset but returns any incomplete contents
-// left in the buffer as a copy.
+// left in the buffer. Note that the data in the buffer returned is overwritten
+// with the next read call.
 func (buffer *BufferedReader) ResetGetIncomplete() []byte {
-	if !buffer.incomplete {
-		buffer.end = 0
-		return []byte{}
-	}
+	remains := buffer.data[:buffer.end]
+	buffer.Reset(0)
+	return remains
+}
 
-	dataCopy := make([]byte, buffer.end)
-	copy(dataCopy, buffer.data[:buffer.end])
-
-	buffer.end = 0
-	buffer.incomplete = true
-	return dataCopy
+// HasIncompleteData returns true if there is unparsed data left in the buffer
+func (buffer *BufferedReader) HasIncompleteData() bool {
+	return buffer.end > 0
 }
 
 // general message extraction part of all parser methods
@@ -303,21 +301,22 @@ func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
 			return nil, 0 // ### return, incomplete ###
 		}
 
-		nextIdx = delimiterIdx[1]
-
 		// If we look for end of message, we're done
-		if buffer.flags&BufferedReaderFlagRegexStart == 0 {
+		if buffer.flags&BufferedReaderFlagRegexStart != BufferedReaderFlagRegexStart {
+			println("done")
+			nextIdx = delimiterIdx[1]
 			break
 		}
 
-		// If we did find a start offset or if the first occurrence is not at
-		// the start of the message we are done
+		// We're done as this is the second pass (start offset != 0)
+		// If we have data before the match we're done with the remains of an incomplete message
 		if startOffset > 0 || delimiterIdx[0] > 0 {
+			nextIdx = delimiterIdx[0] + startOffset
 			break
 		}
 
-		// Found start of first message, look for start of second message
-		startOffset = nextIdx
+		// Found start of first message, look for start of second message.
+		startOffset = delimiterIdx[1] + startOffset
 	}
 
 	return buffer.extractMessage(nextIdx, 0)
