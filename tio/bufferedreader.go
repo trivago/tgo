@@ -303,7 +303,6 @@ func (buffer *BufferedReader) parseDelimiterRegex() ([]byte, int) {
 
 		// If we look for end of message, we're done
 		if buffer.flags&BufferedReaderFlagRegexStart != BufferedReaderFlagRegexStart {
-			println("done")
 			nextIdx = delimiterIdx[1]
 			break
 		}
