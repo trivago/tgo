@@ -1,5 +1,9 @@
 # tGo
 
+> [!CAUTION]
+> This repository has been archived as of October 2025.  
+> If you wish to update or extend this project, please create a fork.
+
 [![GoDoc](https://godoc.org/github.com/trivago/tgo?status.svg)](https://godoc.org/github.com/trivago/tgo)
 [![Go Report Card](http://goreportcard.com/badge/trivago/tgo)](http://goreportcard.com/report/trivago/tgo)
 [![Build Status](https://travis-ci.org/trivago/tgo.svg?branch=master)](https://travis-ci.org/trivago/tgo)
